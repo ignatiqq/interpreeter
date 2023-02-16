@@ -5,7 +5,7 @@ type TokenContructorType = {
     type: TOKEN_TYPES;
     // key (something-meaningful) word
     lexeme: string;
-    literal: any;
+    literal: number | string | null;
     // we need to save token line to show errors with line
     line: number;
 }
@@ -13,7 +13,7 @@ type TokenContructorType = {
 class Token {
     private type: TOKEN_TYPES;
     private lexeme: string;
-    private literal: any;
+    private literal: number | string | null;
     private line: number;
 
     constructor(options: TokenContructorType) {

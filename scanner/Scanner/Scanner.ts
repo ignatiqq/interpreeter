@@ -2,6 +2,8 @@ import { TOKEN_TYPES } from '../../tokens/constants/tokensType';
 import Token from '../../tokens/Token/Token';
 import Interpreter from '../../Interpreter';
 
+import { RESERVED_TOKEN_KEYWORDS } from '../constants/keywords';
+
 interface IScanner {
     scanTokens: () => Array<Token>;
     isAtEnd: () => boolean;
@@ -43,9 +45,32 @@ class Scanner implements IScanner {
         }
     }
 
-    private peek() {
-        if (this.isAtEnd()) return '\0';
-        return this.sourceCode[this.coursor];
+    private peek(options?: { offset?: number }) {
+        const offset = options?.offset || 0;
+        if (this.coursor + offset >= this.sourceCode.length) return '\0';
+        return this.sourceCode[this.coursor + offset];
+    }
+
+    private isDigit(digit: string): boolean {
+        return Number(digit) >= 0 && Number(digit) <= 9;
+    }
+
+    private isAlpha(symbol: string): boolean {
+        return (symbol >= 'a' && symbol <= 'z') ||
+            (symbol >= 'A' && symbol <= 'Z') ||
+            symbol == '_';
+    }
+
+    private isAlphaNumeric(symbol: string): boolean {
+        return this.isAlpha(symbol) || this.isDigit(symbol);
+    }
+
+    /**
+     * Method which return the content between start of our token parse
+     * and the current coursor position:
+     */
+    private getContetBetweenCoursor(): string {
+        return this.sourceCode.slice(this.start, this.coursor);
     }
 
     /**
@@ -121,14 +146,61 @@ class Scanner implements IScanner {
 
             case '"': this.parseString(); break;
 
-            default: Interpreter.signalError(this.line, 'Unexpected token: ' + rangeSymbol); break;
+            default: {
+                // tokenize all numbers
+                if (this.isDigit(rangeSymbol)) {
+                    this.parseNumber();
+                }
+                // tokenize all identifiers
+                // check is it aplhabet
+                if (this.isAlpha(rangeSymbol)) {
+                    this.parseIdentifier(rangeSymbol);
+                }
+                Interpreter.signalError(this.line, 'Unexpected token: ' + rangeSymbol); break;
+            }
         }
     }
 
+    private onKeywordsCheck(word: string) {
+        if(Boolean(RESERVED_TOKEN_KEYWORDS[word])) {
+            // @TOCONTINUE: 
+            return this.addToken()
+        }
+    }
+
+    /**
+     * Method which parse our identifiers (variables)
+     */
+    private parseIdentifier(symbol: string) {
+        const variableName = this.readWhileMatching(() => this.isAlphaNumeric(this.peek()));
+
+        // if (!this.peek({ offset: 1 }) === ' ') {
+
+        // }
+    }
+
+    private parseNumber() {
+        const isPeekDigit = () => this.isDigit(this.peek())
+
+        this.readWhileMatching(isPeekDigit);
+
+        // check that's can be double number and after '.' we must
+        // have number, thats why we prop 1 offset 
+        // we must to know that's it digit after '.'
+        if (this.peekMatch('.') && this.isDigit(this.peek({ offset: 1 }))) {
+            this.readWhileMatching(isPeekDigit);
+        }
+
+        this.addToken(TOKEN_TYPES.NUMBER, Number(this.getContetBetweenCoursor()))
+    }
+
+    /**
+     * Parse strign eat doublequoutes and tokenize content string
+     */
     private parseString() {
         this.eat('"');
 
-        const content = this.readWhileMatching(() => this.peekMatch('"') && !this.isAtEnd());
+        const content = this.readWhileMatching(() => !this.peekMatch('"') && !this.isAtEnd());
 
         if (this.isAtEnd()) {
             Interpreter.signalError(this.line, "Unterminated string.");
@@ -142,12 +214,16 @@ class Scanner implements IScanner {
         while (pattern()) {
             this.coursor++;
             // add line if it matches new line
+
+            // @TODO REMOVE
+            // hardCode to skip lines when string can be 
+            // on any lines of code
             if (this.peekMatch('\n')) this.line++;
         }
         return this.sourceCode.slice(this.start, this.coursor);
     }
 
-    private addToken(type: TOKEN_TYPES, literal: string | null = null) {
+    private addToken(type: TOKEN_TYPES, literal: number | string | null = null) {
         const lexeme = this.sourceCode.slice(this.start, this.coursor);
         const token = new Token({ type, lexeme, literal, line: this.line })
     }
