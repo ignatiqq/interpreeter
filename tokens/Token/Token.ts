@@ -2,7 +2,7 @@ import { TOKEN_TYPES } from "../constants/tokensType";
 
 type TokenContructorType = {
     // language keywords
-    type: TOKEN_TYPES;
+    type: typeof TOKEN_TYPES;
     // key (something-meaningful) word
     lexeme: string;
     literal: number | string | null;
@@ -11,7 +11,7 @@ type TokenContructorType = {
 }
 
 class Token {
-    private type: TOKEN_TYPES;
+    private type: typeof TOKEN_TYPES;
     private lexeme: string;
     private literal: number | string | null;
     private line: number;
