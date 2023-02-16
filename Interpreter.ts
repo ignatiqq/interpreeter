@@ -19,7 +19,7 @@ class Interpreter {
 	static reportError(options: ErrorReporterOptions) {
 		const { line, where, message } = options;
 		Interpreter.hadError = true;
-		console.error(`[Line ${line} ] Error ${where}: ${message}`);
+		console.error(`\x1b[33m [Line ${line}] Error ${where}: ${message} \x1b[0m`);
 	}
 
 	public interprete(source: string) {

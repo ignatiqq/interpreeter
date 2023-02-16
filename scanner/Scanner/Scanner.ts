@@ -51,7 +51,7 @@ class Scanner implements IScanner {
     }
 
     private isDigit(digit: string): boolean {
-        return Number(digit) >= 0 && Number(digit) <= 9;
+        return digit.length > 1 && Number(digit) >= 0 && Number(digit) <= 9;
     }
 
     private isAlpha(symbol: string): boolean {
@@ -85,6 +85,7 @@ class Scanner implements IScanner {
         while (!this.isAtEnd()) {
             // define start line after analyze any of lexem (character) to work only with it
             this.start = this.coursor;
+            console.log("ON START: ", this.start);
             this.recognizeToken();
         }
 
@@ -93,21 +94,22 @@ class Scanner implements IScanner {
 
     private recognizeToken() {
         // get symbol (lexem) from source code
-        const rangeSymbol = this.sourceCode[this.coursor++];
+        const rangeSymbol = this.sourceCode[this.coursor];
+        console.log("ITERATE: ", { rangeSymbol }, 'COURSOR: ', this.coursor, 'VALUE OF CURRENT COURSOR: ', this.sourceCode[this.coursor]);
         switch (rangeSymbol) {
-            case '(': this.addToken(TOKEN_TYPES.LEFT_PAREN); break;
-            case ')': this.addToken(TOKEN_TYPES.RIGHT_PAREN); break;
-            case '{': this.addToken(TOKEN_TYPES.LEFT_BRACE); break;
-            case '}': this.addToken(TOKEN_TYPES.RIGHT_BRACE); break;
-            case ',': this.addToken(TOKEN_TYPES.COMMA); break;
-            case '.': this.addToken(TOKEN_TYPES.DOT); break;
-            case '-': this.addToken(TOKEN_TYPES.MINUS); break;
-            case '+': this.addToken(TOKEN_TYPES.PLUS); break;
-            case ';': this.addToken(TOKEN_TYPES.SEMICOLON); break;
-            case '*': this.addToken(TOKEN_TYPES.STAR); break;
-            // Lexems which can be in two different means
-            // we must to match next of current "rangeSymbol" to check if it matches
-            // and if it matches well skip coursor
+            case '(': this.addToken(TOKEN_TYPES.LEFT_PAREN); this.coursor++; break;
+            case ')': this.addToken(TOKEN_TYPES.RIGHT_PAREN); this.coursor++; break;
+            case '{': this.addToken(TOKEN_TYPES.LEFT_BRACE); this.coursor++; break;
+            case '}': this.addToken(TOKEN_TYPES.RIGHT_BRACE); this.coursor++; break;
+            case ',': this.addToken(TOKEN_TYPES.COMMA); this.coursor++; break;
+            case '.': this.addToken(TOKEN_TYPES.DOT); this.coursor++; break;
+            case '-': this.addToken(TOKEN_TYPES.MINUS); this.coursor++; break;
+            case '+': this.addToken(TOKEN_TYPES.PLUS); this.coursor++; break;
+            case ';': this.addToken(TOKEN_TYPES.SEMICOLON); this.coursor++; break;
+            case '*': this.addToken(TOKEN_TYPES.STAR); this.coursor++; break;
+            // // Lexems which can be in two different means
+            // // we must to match next of current "rangeSymbol" to check if it matches
+            // // and if it matches well skip coursor
             case '!':
                 // we'll match next symbol and skip it if it matches
                 this.addToken(this.match('=') ? TOKEN_TYPES.NOT_EQUAL : TOKEN_TYPES.NOT);
@@ -116,7 +118,7 @@ class Scanner implements IScanner {
             case '=':
                 this.addToken(this.match('=') ? TOKEN_TYPES.EQUAL_EQUAL : TOKEN_TYPES.EQUAL);
                 this.coursor++;
-                break
+                break;
             case '<':
                 this.addToken(this.match('=') ? TOKEN_TYPES.LESS_EQUAL : TOKEN_TYPES.LESS);
                 this.coursor++;
@@ -138,26 +140,32 @@ class Scanner implements IScanner {
             case ' ':
             case '\r':
             case '\t':
+                this.coursor++;
                 break;
             // new line
             case '\n':
                 // increase line cause we need to have right line to define line errors
+                this.coursor++;
                 this.line++;
                 break;
 
-            case '"': this.parseString(); break;
+            case '"':
+                this.parseString(); break;
 
             default: {
                 // tokenize all numbers
                 if (this.isDigit(rangeSymbol)) {
                     this.parseNumber();
-                }
-                // tokenize all identifiers
-                // check is it aplhabet
-                if (this.isAlpha(rangeSymbol)) {
-                    this.parseIdentifier();
-                }
-                Interpreter.signalError(this.line, 'Unexpected token: ' + rangeSymbol); break;
+                } else
+                    // tokenize all identifiers
+                    // check is it aplhabet
+                    if (this.isAlpha(rangeSymbol)) {
+                        this.parseIdentifier();
+                    } else {
+                        // we must to stop our shile loop if it's error
+                        Interpreter.signalError(this.line, '(in default case) Unexpected token: ' + rangeSymbol); break;
+                    }
+                break;
             }
         }
     }
@@ -195,19 +203,26 @@ class Scanner implements IScanner {
      * Parse strign eat doublequoutes and tokenize content string
      */
     private parseString() {
+        console.log("COURSR VALUE: ", this.sourceCode[this.coursor], this.coursor);
         this.eat('"');
+        console.log("COURSR VALUE AFTER EAT: ", this.sourceCode[this.coursor], this.coursor);
+
 
         const content = this.readWhileMatching(() => !this.peekMatch('"') && !this.isAtEnd());
+        console.log({ content });
 
         if (this.isAtEnd()) {
             Interpreter.signalError(this.line, "Unterminated string.");
         }
 
+        console.log({ content }, this.peek());
         this.eat('"');
+        console.log(this, this.sourceCode[this.coursor]);
         this.addToken(TOKEN_TYPES.STRING, content);
     }
 
     private readWhileMatching(pattern: () => boolean) {
+        const start = this.coursor;
         while (pattern()) {
             this.coursor++;
             // add line if it matches new line
@@ -217,7 +232,7 @@ class Scanner implements IScanner {
             // on any lines of code
             if (this.peekMatch('\n')) this.line++;
         }
-        return this.sourceCode.slice(this.start, this.coursor);
+        return this.sourceCode.slice(start, this.coursor);
     }
 
     private addToken(type: string, literal: number | string | null = null) {
