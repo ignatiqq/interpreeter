@@ -33,12 +33,13 @@ class Scanner implements IScanner {
     }
 
     private match(symbol: string) {
-        return this.sourceCode.slice(this.start, this.coursor + symbol.length) === symbol;
+        return this.sourceCode.slice(this.coursor, this.coursor + symbol.length) === symbol;
     }
 
     private eat(symbol: string) {
         if (this.match(symbol)) {
             this.coursor = this.coursor + symbol.length;
+            return true;
         } else {
             Interpreter.signalError(this.line, 'Unexpected token: ' + symbol);
         }
@@ -84,8 +85,9 @@ class Scanner implements IScanner {
     public scanTokens() {
         while (!this.isAtEnd()) {
             // define start line after analyze any of lexem (character) to work only with it
+
+            // used only to getContetBetweenCoursor (parseDigit) maybe we can remove it 
             this.start = this.coursor;
-            console.log("ON START: ", this.start);
             this.recognizeToken();
         }
 
@@ -97,35 +99,31 @@ class Scanner implements IScanner {
         const rangeSymbol = this.sourceCode[this.coursor];
         console.log("ITERATE: ", { rangeSymbol }, 'COURSOR: ', this.coursor, 'VALUE OF CURRENT COURSOR: ', this.sourceCode[this.coursor]);
         switch (rangeSymbol) {
-            case '(': this.addToken(TOKEN_TYPES.LEFT_PAREN); this.coursor++; break;
-            case ')': this.addToken(TOKEN_TYPES.RIGHT_PAREN); this.coursor++; break;
-            case '{': this.addToken(TOKEN_TYPES.LEFT_BRACE); this.coursor++; break;
-            case '}': this.addToken(TOKEN_TYPES.RIGHT_BRACE); this.coursor++; break;
-            case ',': this.addToken(TOKEN_TYPES.COMMA); this.coursor++; break;
-            case '.': this.addToken(TOKEN_TYPES.DOT); this.coursor++; break;
-            case '-': this.addToken(TOKEN_TYPES.MINUS); this.coursor++; break;
-            case '+': this.addToken(TOKEN_TYPES.PLUS); this.coursor++; break;
-            case ';': this.addToken(TOKEN_TYPES.SEMICOLON); this.coursor++; break;
-            case '*': this.addToken(TOKEN_TYPES.STAR); this.coursor++; break;
+            case '(': this.addToken(TOKEN_TYPES.LEFT_PAREN); this.eat('('); break;
+            case ')': this.addToken(TOKEN_TYPES.RIGHT_PAREN); this.eat(')'); break;
+            case '{': this.addToken(TOKEN_TYPES.LEFT_BRACE); this.eat('{'); break;
+            case '}': this.addToken(TOKEN_TYPES.RIGHT_BRACE); this.eat('}'); break;
+            case ',': this.addToken(TOKEN_TYPES.COMMA); this.eat(','); break;
+            case '.': this.addToken(TOKEN_TYPES.DOT); this.eat('.'); break;
+            case '-': this.addToken(TOKEN_TYPES.MINUS); this.eat('-'); break;
+            case '+': this.addToken(TOKEN_TYPES.PLUS); this.eat('+'); break;
+            case ';': this.addToken(TOKEN_TYPES.SEMICOLON); this.eat(';'); break;
+            case '*': this.addToken(TOKEN_TYPES.STAR); this.eat('*'); break;
             // // Lexems which can be in two different means
             // // we must to match next of current "rangeSymbol" to check if it matches
             // // and if it matches well skip coursor
             case '!':
                 // we'll match next symbol and skip it if it matches
-                this.addToken(this.match('=') ? TOKEN_TYPES.NOT_EQUAL : TOKEN_TYPES.NOT);
-                this.coursor++;
+                this.addToken(this.eat('=') ? TOKEN_TYPES.NOT_EQUAL : TOKEN_TYPES.NOT);
                 break;
             case '=':
-                this.addToken(this.match('=') ? TOKEN_TYPES.EQUAL_EQUAL : TOKEN_TYPES.EQUAL);
-                this.coursor++;
+                this.addToken(this.eat('=') ? TOKEN_TYPES.EQUAL_EQUAL : TOKEN_TYPES.EQUAL);
                 break;
             case '<':
-                this.addToken(this.match('=') ? TOKEN_TYPES.LESS_EQUAL : TOKEN_TYPES.LESS);
-                this.coursor++;
+                this.addToken(this.eat('=') ? TOKEN_TYPES.LESS_EQUAL : TOKEN_TYPES.LESS);
                 break;
             case '>':
-                this.addToken(this.match('=') ? TOKEN_TYPES.GREATER_EQUAL : TOKEN_TYPES.GREATER);
-                this.coursor++;
+                this.addToken(this.eat('=') ? TOKEN_TYPES.GREATER_EQUAL : TOKEN_TYPES.GREATER);
                 break;
             // comment and division lexical analyze:
             case '/':
@@ -134,6 +132,7 @@ class Scanner implements IScanner {
                     while (!this.peekMatch('\n') && !this.isAtEnd()) this.coursor++;
                 } else {
                     this.addToken(TOKEN_TYPES.SLASH);
+                    this.coursor++;
                 }
                 break;
             // meaningless:
@@ -185,10 +184,9 @@ class Scanner implements IScanner {
     }
 
     private parseNumber() {
-        const isPeekDigit = () => this.isDigit(this.peek())
+        const isPeekDigit = () => this.isDigit(this.peek());
 
         this.readWhileMatching(isPeekDigit);
-
         // check that's can be double number and after '.' we must
         // have number, thats why we prop 1 offset 
         // we must to know that's it digit after '.'
