@@ -29,7 +29,7 @@ class Scanner implements IScanner {
     }
 
     private isAtEnd() {
-        return this.coursor < this.sourceCode.length;
+        return this.coursor === this.sourceCode.length;
     }
 
     private match(symbol: string) {
@@ -169,8 +169,8 @@ class Scanner implements IScanner {
         // variable name
         const variableName = this.readWhileMatching(() => this.isAlphaNumeric(this.peek()));
 
-        if (Boolean(RESERVED_TOKEN_KEYWORDS[variableName])) {
-            this.addToken(RESERVED_TOKEN_KEYWORDS[variableName], variableName);
+        if (Boolean(RESERVED_TOKEN_KEYWORDS[variableName as keyof typeof RESERVED_TOKEN_KEYWORDS])) {
+            this.addToken(RESERVED_TOKEN_KEYWORDS[variableName as keyof typeof RESERVED_TOKEN_KEYWORDS], variableName);
         } else {
             this.addToken(TOKEN_TYPES.VAR, variableName);
         }

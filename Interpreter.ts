@@ -10,7 +10,6 @@ type ErrorReporterOptions = {
 
 
 class Interpreter {
-	originalStr: string;
 	static hadError = false;
 
 	static signalError(line: number, message: string) {
@@ -23,16 +22,12 @@ class Interpreter {
 		console.error(`[Line ${line} ] Error ${where}: ${message}`);
 	}
 
-	public interprete(path: string) {
-		if (path) {
-			this.runFile(path);
-		}
+	public interprete(source: string) {
+		this.runFile(source);
 	}
 
-	private runFile(path: string) {
-		const originalCode = fs.readFileSync(path, 'utf-8');
-		console.log({ originalCode });
-		this.run(originalCode);
+	private runFile(source: string) {
+		this.run(source);
 
 		if (Interpreter.hadError) {
 			return;
@@ -42,6 +37,8 @@ class Interpreter {
 	private run(source: string) {
 		const scanner = new Scanner(source);
 		const tokens = scanner.scanTokens();
+
+		console.log({ tokens });
 
 		for (let i = 0; i < tokens.length; i++) {
 			console.log(tokens[i]);
