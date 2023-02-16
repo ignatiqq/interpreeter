@@ -52,7 +52,7 @@ class Scanner implements IScanner {
     }
 
     private isDigit(digit: string): boolean {
-        return digit.length > 1 && Number(digit) >= 0 && Number(digit) <= 9;
+        return digit.length >= 1 && Number(digit) >= 0 && Number(digit) <= 9;
     }
 
     private isAlpha(symbol: string): boolean {
@@ -228,6 +228,7 @@ class Scanner implements IScanner {
     }
 
     private addToken(type: string, literal: number | string | null = null) {
+        // @TODO why we need lexem? BUG with doublequoutes
         const lexeme = this.sourceCode.slice(this.start, this.coursor);
         const token = new Token({ type, lexeme, literal, line: this.line });
         this.tokens.push(token);
