@@ -8,14 +8,10 @@ type ErrorReporterOptions = {
 	message: string;
 }
 
-interface IInterpreter {
-	signalError: (line: number, message: string) => void;
-}
 
-class Interpreter implements IInterpreter {
+class Interpreter {
 	originalStr: string;
 	static hadError = false;
-
 
 	static signalError(line: number, message: string) {
 		this.reportError({ line, where: "", message });
@@ -35,6 +31,7 @@ class Interpreter implements IInterpreter {
 
 	private runFile(path: string) {
 		const originalCode = fs.readFileSync(path, 'utf-8');
+		console.log({ originalCode });
 		this.run(originalCode);
 
 		if (Interpreter.hadError) {

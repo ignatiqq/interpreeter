@@ -6,7 +6,6 @@ import { RESERVED_TOKEN_KEYWORDS } from '../constants/keywords';
 
 interface IScanner {
     scanTokens: () => Array<Token>;
-    isAtEnd: () => boolean;
 }
 
 class Scanner implements IScanner {
@@ -88,6 +87,8 @@ class Scanner implements IScanner {
             this.start = this.coursor;
             this.recognizeToken();
         }
+
+        return this.tokens;
     }
 
     private recognizeToken() {
@@ -154,29 +155,25 @@ class Scanner implements IScanner {
                 // tokenize all identifiers
                 // check is it aplhabet
                 if (this.isAlpha(rangeSymbol)) {
-                    this.parseIdentifier(rangeSymbol);
+                    this.parseIdentifier();
                 }
                 Interpreter.signalError(this.line, 'Unexpected token: ' + rangeSymbol); break;
             }
         }
     }
 
-    private onKeywordsCheck(word: string) {
-        if(Boolean(RESERVED_TOKEN_KEYWORDS[word])) {
-            // @TOCONTINUE: 
-            return this.addToken()
-        }
-    }
-
     /**
      * Method which parse our identifiers (variables)
      */
-    private parseIdentifier(symbol: string) {
+    private parseIdentifier() {
+        // variable name
         const variableName = this.readWhileMatching(() => this.isAlphaNumeric(this.peek()));
 
-        // if (!this.peek({ offset: 1 }) === ' ') {
-
-        // }
+        if (Boolean(RESERVED_TOKEN_KEYWORDS[variableName])) {
+            this.addToken(RESERVED_TOKEN_KEYWORDS[variableName], variableName);
+        } else {
+            this.addToken(TOKEN_TYPES.VAR, variableName);
+        }
     }
 
     private parseNumber() {
@@ -223,9 +220,10 @@ class Scanner implements IScanner {
         return this.sourceCode.slice(this.start, this.coursor);
     }
 
-    private addToken(type: TOKEN_TYPES, literal: number | string | null = null) {
+    private addToken(type: string, literal: number | string | null = null) {
         const lexeme = this.sourceCode.slice(this.start, this.coursor);
-        const token = new Token({ type, lexeme, literal, line: this.line })
+        const token = new Token({ type, lexeme, literal, line: this.line });
+        this.tokens.push(token);
     }
 
 }
