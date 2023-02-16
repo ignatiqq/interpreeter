@@ -97,7 +97,6 @@ class Scanner implements IScanner {
     private recognizeToken() {
         // get symbol (lexem) from source code
         const rangeSymbol = this.sourceCode[this.coursor];
-        console.log("ITERATE: ", { rangeSymbol }, 'COURSOR: ', this.coursor, 'VALUE OF CURRENT COURSOR: ', this.sourceCode[this.coursor]);
         switch (rangeSymbol) {
             case '(': this.addToken(TOKEN_TYPES.LEFT_PAREN); this.eat('('); break;
             case ')': this.addToken(TOKEN_TYPES.RIGHT_PAREN); this.eat(')'); break;
@@ -201,21 +200,16 @@ class Scanner implements IScanner {
      * Parse strign eat doublequoutes and tokenize content string
      */
     private parseString() {
-        console.log("COURSR VALUE: ", this.sourceCode[this.coursor], this.coursor);
         this.eat('"');
-        console.log("COURSR VALUE AFTER EAT: ", this.sourceCode[this.coursor], this.coursor);
 
 
         const content = this.readWhileMatching(() => !this.peekMatch('"') && !this.isAtEnd());
-        console.log({ content });
 
         if (this.isAtEnd()) {
             Interpreter.signalError(this.line, "Unterminated string.");
         }
 
-        console.log({ content }, this.peek());
         this.eat('"');
-        console.log(this, this.sourceCode[this.coursor]);
         this.addToken(TOKEN_TYPES.STRING, content);
     }
 
