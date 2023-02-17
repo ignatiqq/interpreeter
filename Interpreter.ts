@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 import Scanner from './scanner/Scanner/Scanner';
 
 type ErrorReporterOptions = {

@@ -1,5 +1,7 @@
 var hello = "world";
 
-var lya = 123;
+var hi = "Hi";
 
-function
+function hello() {
+    var ignat = "world";
+}

@@ -52,6 +52,7 @@ class Scanner implements IScanner {
     }
 
     private isDigit(digit: string): boolean {
+        if (!this.isAlpha(digit) && digit !== '0') return false;
         return digit.length >= 1 && Number(digit) >= 0 && Number(digit) <= 9;
     }
 
@@ -202,7 +203,6 @@ class Scanner implements IScanner {
     private parseString() {
         this.eat('"');
 
-
         const content = this.readWhileMatching(() => !this.peekMatch('"') && !this.isAtEnd());
 
         if (this.isAtEnd()) {
@@ -210,7 +210,7 @@ class Scanner implements IScanner {
         }
 
         this.eat('"');
-        this.addToken(TOKEN_TYPES.STRING, content);
+        this.addToken(TOKEN_TYPES.STRING, content.slice(1, content.length));
     }
 
     private readWhileMatching(pattern: () => boolean) {
