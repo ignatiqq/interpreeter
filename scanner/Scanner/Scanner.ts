@@ -8,6 +8,9 @@ interface IScanner {
     scanTokens: () => Array<Token>;
 }
 
+/**
+ * Tokenizer of language
+ */
 class Scanner implements IScanner {
     private sourceCode: string;
     private start: number;
