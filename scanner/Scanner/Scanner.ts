@@ -9,7 +9,7 @@ interface IScanner {
 }
 
 /**
- * Tokenizer of language
+ * Tokenizer of languagee
  */
 class Scanner implements IScanner {
     private sourceCode: string;
