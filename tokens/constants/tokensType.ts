@@ -47,4 +47,4 @@ export const TOKEN_TYPES = {
     EOF: "EOF"
 }
 
-// export type TOKEN_TYPES_KEY_TYPE = keyof typeof TOKEN_TYPES;
+export type TOKEN_TYPE = keyof typeof TOKEN_TYPES;

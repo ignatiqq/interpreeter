@@ -9,10 +9,10 @@ type TokenContructorType = {
 }
 
 class Token {
-    private type: string;
-    private lexeme: string;
-    private literal: number | string | null;
-    private line: number;
+    type: string;
+    lexeme: string;
+    literal: number | string | null;
+    line: number;
 
     constructor(options: TokenContructorType) {
         const { type, lexeme, literal, line } = options;
