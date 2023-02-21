@@ -1,7 +1,1 @@
-var hello = "world";
-
-var hi = "Hi";
-
-function hello() {
-    var ignat = "world";
-}
+1 + 123

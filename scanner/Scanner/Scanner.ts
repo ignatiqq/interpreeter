@@ -8,6 +8,10 @@ interface IScanner {
     scanTokens: () => Array<Token>;
 }
 
+const isNullishString = (value: string) => {
+    return Number(value) === 0 && value !== '0';
+}
+
 /**
  * Tokenizer of languagee
  */
@@ -55,7 +59,8 @@ class Scanner implements IScanner {
     }
 
     private isDigit(digit: string): boolean {
-        if (!this.isAlpha(digit) && digit !== '0') return false;
+        if(this.isAlpha(digit)) return false;
+        if(isNullishString(digit)) return false;
         return digit.length >= 1 && Number(digit) >= 0 && Number(digit) <= 9;
     }
 
@@ -82,8 +87,9 @@ class Scanner implements IScanner {
      * @param {string} symbol to current symbol match
      * @returns {boolean} 
      */
-    private peekMatch(symbol: string): boolean {
-        return this.peek() === symbol;
+    private peekMatch(symbol: string, options?: { offset?: number }): boolean {
+        const offset = options?.offset || 0;
+        return this.peek({ offset }) === symbol;
     }
 
     public scanTokens() {
@@ -131,11 +137,10 @@ class Scanner implements IScanner {
             // comment and division lexical analyze:
             case '/':
                 if (this.match('/')) {
-                    // A comment goes until the end of the line.
-                    while (!this.peekMatch('\n') && !this.isAtEnd()) this.coursor++;
+                    this.skipComments();
                 } else {
                     this.addToken(TOKEN_TYPES.SLASH);
-                    this.coursor++;
+                    this.eat('/');
                 }
                 break;
             // meaningless:
@@ -156,6 +161,7 @@ class Scanner implements IScanner {
 
             default: {
                 // tokenize all numbers
+                console.log(rangeSymbol);
                 if (this.isDigit(rangeSymbol)) {
                     this.parseNumber();
                 } else
@@ -170,6 +176,33 @@ class Scanner implements IScanner {
                 break;
             }
         }
+    }
+
+    private skipComments() {
+        if (this.peekMatch('*', { offset: 1 })) {
+            this.skipCStyleComments();
+        } else {
+            this.skipInlineComment();
+        }
+    }
+
+    private skipCStyleComments() {
+        // eat comment start
+        this.eat('/');
+        this.eat('*');
+
+        const isNotEndOfComment = () => !(this.peekMatch('*') && this.peekMatch('/', { offset: 1 }));
+        this.readWhileMatching(isNotEndOfComment);
+
+        // eat comment end
+        this.eat('*');
+        this.eat('/');
+    }
+
+    private skipInlineComment() {
+        this.eat('/');
+        // A comment goes until the end of the line.
+        while (!this.peekMatch('\n') && !this.isAtEnd()) this.coursor++;
     }
 
     /**
@@ -213,7 +246,7 @@ class Scanner implements IScanner {
         }
 
         this.eat('"');
-        this.addToken(TOKEN_TYPES.STRING, content.slice(1, content.length));
+        this.addToken(TOKEN_TYPES.STRING, content);
     }
 
     private readWhileMatching(pattern: () => boolean) {
@@ -222,7 +255,6 @@ class Scanner implements IScanner {
             this.coursor++;
             // add line if it matches new line
 
-            // @TODO REMOVE
             // hardCode to skip lines when string can be 
             // on any lines of code
             if (this.peekMatch('\n')) this.line++;
