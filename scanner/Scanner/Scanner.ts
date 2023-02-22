@@ -100,7 +100,8 @@ class Scanner implements IScanner {
             this.start = this.coursor;
             this.recognizeToken();
         }
-
+        // ADD token which means end of our code 
+        this.addToken(TOKEN_TYPES.EOF);
         return this.tokens;
     }
 
@@ -263,8 +264,7 @@ class Scanner implements IScanner {
     }
 
     private addToken(type: string, literal: number | string | null = null) {
-        // @TODO why we need lexem? BUG with doublequoutes
-        const lexeme = this.sourceCode.slice(this.start, this.coursor);
+        const lexeme = type === TOKEN_TYPES.EOF ? '' : this.sourceCode.slice(this.start, this.coursor);
         const token = new Token({ type, lexeme, literal, line: this.line });
         this.tokens.push(token);
     }

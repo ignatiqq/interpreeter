@@ -46,11 +46,6 @@ class Interpreter {
 	private run(source: string) {
 		const scanner = new Scanner(source);
 		const tokens = scanner.scanTokens();
-
-		for (let i = 0; i < tokens.length; i++) {
-			console.log(tokens[i]);
-		}
-
 		this.parse(tokens);
 	}
 
