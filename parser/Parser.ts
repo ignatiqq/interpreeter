@@ -72,7 +72,7 @@ export class Parser {
         while(this.match(TOKEN_TYPES.MINUS, TOKEN_TYPES.PLUS)) {
             const operator = this.previous();
             const right = this.factor();
-            return new TermExpr(expr, operator, right);
+            expr = new TermExpr(expr, operator, right);
         }
 
         return expr;
@@ -81,11 +81,8 @@ export class Parser {
     factor(): FactorExprReturnType {
         let expr: FactorExprReturnType = this.unary();
         // error in this.match (because this.previous is undefined)
-        console.log('factor: ', {expr}, this.peek());
         // Error here get type of undefined
-        console.log(this.isAtEnd());
 
-        console.log('match: ', this.match(TOKEN_TYPES.SLASH, TOKEN_TYPES.STAR));
         if(this.match(TOKEN_TYPES.SLASH, TOKEN_TYPES.STAR)) {
             const operator = this.previous();
             const right = this.unary();
@@ -127,9 +124,10 @@ export class Parser {
         if(this.match(TOKEN_TYPES.NUMBER) || this.match(TOKEN_TYPES.STRING)) {
             return new LiteralExpr(this.previous().literal);
         }
-        if(this.match(TOKEN_TYPES.LEFT_BRACE)) {
+        if(this.match(TOKEN_TYPES.LEFT_PAREN)) {
             const expr = this.expression();
-            this.consume(TOKEN_TYPES.RIGHT_BRACE, 'Expected ")" after grouping expression');
+            console.log('after left_paren: ', {expr}, this.coursor, this.peek(), this.check(TOKEN_TYPES.RIGHT_PAREN));
+            this.consume(TOKEN_TYPES.RIGHT_PAREN, 'Expected ")" after grouping expression');
             return new GroupingExpr(expr);
         }
 
@@ -180,7 +178,10 @@ export class Parser {
      * and argument type are not same 
      */
     consume(type: string, message: string) {
-        if(this.check(type)) this.advance;
+        if(this.check(type)) {
+            this.advance();
+            return;
+        }
         
         throw this.error(this.peek(), message);
     }
