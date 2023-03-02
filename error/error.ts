@@ -1,3 +1,4 @@
+import Token from "../tokens/Token/Token";
 
 export class SyntaxError extends Error {
     line?: number;
@@ -13,4 +14,17 @@ export class SyntaxError extends Error {
       }
 }
 
-export class ParseError extends Error {}
+export class ParseError extends Error {
+
+}
+
+export class RuntimeError extends Error {
+  token: Token;
+  message: string;
+
+  constructor(token: Token, message: string) {
+    super();
+    this.token = token;
+    this.message = message;
+  }
+}

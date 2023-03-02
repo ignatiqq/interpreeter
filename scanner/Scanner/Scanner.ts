@@ -109,16 +109,16 @@ class Scanner implements IScanner {
         // get symbol (lexem) from source code
         const rangeSymbol = this.sourceCode[this.coursor];
         switch (rangeSymbol) {
-            case '(': this.addToken(TOKEN_TYPES.LEFT_PAREN); this.eat('('); break;
-            case ')': this.addToken(TOKEN_TYPES.RIGHT_PAREN); this.eat(')'); break;
-            case '{': this.addToken(TOKEN_TYPES.LEFT_BRACE); this.eat('{'); break;
-            case '}': this.addToken(TOKEN_TYPES.RIGHT_BRACE); this.eat('}'); break;
-            case ',': this.addToken(TOKEN_TYPES.COMMA); this.eat(','); break;
-            case '.': this.addToken(TOKEN_TYPES.DOT); this.eat('.'); break;
-            case '-': this.addToken(TOKEN_TYPES.MINUS); this.eat('-'); break;
-            case '+': this.addToken(TOKEN_TYPES.PLUS); this.eat('+'); break;
-            case ';': this.addToken(TOKEN_TYPES.SEMICOLON); this.eat(';'); break;
-            case '*': this.addToken(TOKEN_TYPES.STAR); this.eat('*'); break;
+            case '(': this.eat('('); this.addToken(TOKEN_TYPES.LEFT_PAREN); break;
+            case ')': this.eat(')'); this.addToken(TOKEN_TYPES.RIGHT_PAREN); break;
+            case '{': this.eat('{'); this.addToken(TOKEN_TYPES.LEFT_BRACE); break;
+            case '}': this.eat('}'); this.addToken(TOKEN_TYPES.RIGHT_BRACE);  break;
+            case ',': this.eat(','); this.addToken(TOKEN_TYPES.COMMA); break;
+            case '.': this.eat('.'); this.addToken(TOKEN_TYPES.DOT); break;
+            case '-': this.eat('-'); this.addToken(TOKEN_TYPES.MINUS); break;
+            case '+': this.eat('+'); this.addToken(TOKEN_TYPES.PLUS); break;
+            case ';': this.eat(';'); this.addToken(TOKEN_TYPES.SEMICOLON); break;
+            case '*': this.eat('*'); this.addToken(TOKEN_TYPES.STAR); break;
             // // Lexems which can be in two different means
             // // we must to match next of current "rangeSymbol" to check if it matches
             // // and if it matches well skip coursor
@@ -162,7 +162,6 @@ class Scanner implements IScanner {
 
             default: {
                 // tokenize all numbers
-                console.log(rangeSymbol);
                 if (this.isDigit(rangeSymbol)) {
                     this.parseNumber();
                 } else
@@ -266,6 +265,7 @@ class Scanner implements IScanner {
     private addToken(type: string, literal: number | string | null = null) {
         const lexeme = type === TOKEN_TYPES.EOF ? '' : this.sourceCode.slice(this.start, this.coursor);
         const token = new Token({ type, lexeme, literal, line: this.line });
+        console.log(token);
         this.tokens.push(token);
     }
 

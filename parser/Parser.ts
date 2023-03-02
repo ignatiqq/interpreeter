@@ -1,19 +1,17 @@
 import { ParseError } from "../error/error";
-import { ComparisonExpr, EqualityExpr, Expr, FactorExpr, GroupingExpr, LiteralExpr, TermExpr, UnaryExpr } from "../expressions/Expressions";
+import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
 import Token from "../tokens/Token/Token";
 
 type PrimaryExprReturnType = LiteralExpr | GroupingExpr;
 type UnaryExprReturnType = UnaryExpr | PrimaryExprReturnType;
-type FactorExprReturnType = FactorExpr | UnaryExprReturnType;
-type TermExprReturnType = TermExpr | FactorExprReturnType;
-type ComparisonExprReturnType = ComparisonExpr | TermExprReturnType;
-type EqualityExprReturnType = EqualityExpr | ComparisonExprReturnType;
+type BinaryExprType = BinaryExpr | UnaryExprReturnType;
 
 /**
  * Парсер преобразует набор токенов в правила языка (в исходный код)
  * Каждое правило грамматики языка становиться методом этого класса 
+ * (Преобразуем токены созданны сканером (лексическим анализатором) в узлы синтаскического дерева)
  */
 export class Parser {
     private coursor: number;
@@ -29,7 +27,7 @@ export class Parser {
             return this.expression();
         } catch (error) {
             console.error(error);
-            return null;
+            return;
         }
     }
 
@@ -37,56 +35,56 @@ export class Parser {
         return this.equality();
     }
 
-    equality(): EqualityExprReturnType {
+    equality(): BinaryExprType {
         // ФИНАЛЬНЫЙ EXPRESSION CLASS (TYPE) НЕОБЯЗАТЕЛЬНО ДОЛЖЕН БЫТЬ
         // ЭКСПРЕШНОМ ПРАВИЛА УСЛОВНОГО (equality) ОН МОЖЕТ БЫТЬ
         // ОБЫЧНЫМ ЧИСЛОМ, ПОЭТОМУ В ВАЙЛ ЦИКЛ МЫ МОЖЕМ НЕ ЗАЙТИ 
         // И ПОЭТОМУ ВОЗВРАЩАЕМОЙ ЗНАЧЕНИЕ МОЖЕТ БЫТЬ ЛЮБЫМ ТИПОМ 
         // НЕОБЯХАТЕЛЬНО {EqualityExprReturnType} поэтому название переменной expr (Expression)
-        let expr: EqualityExprReturnType = this.comparison();
+        let expr: BinaryExprType = this.comparison();
 
         while(this.match(TOKEN_TYPES.NOT_EQUAL, TOKEN_TYPES.EQUAL_EQUAL)) {
             const operator = this.previous();
             const right = this.comparison();
-            expr = new EqualityExpr(expr, operator, right);
+            expr = new BinaryExpr(expr, operator, right);
         }
 
         return expr;
     }
 
-    comparison(): ComparisonExprReturnType {
-        let expr: ComparisonExprReturnType = this.term();
+    comparison(): BinaryExprType {
+        let expr: BinaryExprType = this.term();
 
         while(this.match(TOKEN_TYPES.LESS, TOKEN_TYPES.LESS_EQUAL, TOKEN_TYPES.GREATER, TOKEN_TYPES.GREATER_EQUAL)) {
             const operator = this.previous();
             const right = this.term();
-            expr = new ComparisonExpr(expr, operator, right);
+            expr = new BinaryExpr(expr, operator, right);
         }
 
         return expr;
     }
 
-    term(): TermExprReturnType {
-        let expr: TermExprReturnType = this.factor();
+    term(): BinaryExprType {
+        let expr: BinaryExprType = this.factor();
 
         while(this.match(TOKEN_TYPES.MINUS, TOKEN_TYPES.PLUS)) {
             const operator = this.previous();
             const right = this.factor();
-            expr = new TermExpr(expr, operator, right);
+            expr = new BinaryExpr(expr, operator, right);
         }
 
         return expr;
     }
 
-    factor(): FactorExprReturnType {
-        let expr: FactorExprReturnType = this.unary();
+    factor(): BinaryExprType {
+        let expr: BinaryExprType = this.unary();
         // error in this.match (because this.previous is undefined)
         // Error here get type of undefined
 
         if(this.match(TOKEN_TYPES.SLASH, TOKEN_TYPES.STAR)) {
             const operator = this.previous();
             const right = this.unary();
-            expr = new FactorExpr(expr, operator, right);
+            expr = new BinaryExpr(expr, operator, right);
         }
 
         return expr;
@@ -126,7 +124,6 @@ export class Parser {
         }
         if(this.match(TOKEN_TYPES.LEFT_PAREN)) {
             const expr = this.expression();
-            console.log('after left_paren: ', {expr}, this.coursor, this.peek(), this.check(TOKEN_TYPES.RIGHT_PAREN));
             this.consume(TOKEN_TYPES.RIGHT_PAREN, 'Expected ")" after grouping expression');
             return new GroupingExpr(expr);
         }

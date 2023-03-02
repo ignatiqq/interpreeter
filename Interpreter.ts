@@ -1,3 +1,5 @@
+import { InterpreeterMath } from './AST/interpreeter';
+import { ASTPrinter } from './AST/printer/ASTprinter';
 import { Parser } from './parser/Parser';
 import Scanner from './scanner/Scanner/Scanner';
 import { TOKEN_TYPES } from './tokens/constants/tokensType';
@@ -12,6 +14,8 @@ type ErrorReporterOptions = {
 
 class Interpreter {
 	static hadError = false;
+	static hadRuntimeError = false;
+	static interpreterMath = new InterpreeterMath();
 
 	static error(token: Token, message: string) {
 		if(token.type === TOKEN_TYPES.EOF) {
@@ -19,6 +23,11 @@ class Interpreter {
 		} else {
 			this.signalError(token.line, 'at' + ` "${token.lexeme}". ` + message);
 		}
+	}
+
+	static runtimeError(token: Token, message: string) {
+		console.error(`\x1b[33m [Line ${token.line}] Error: ${message} \x1b[0m`);
+		this.hadRuntimeError = true;
 	}
 
 	static signalError(line: number, message: string) {
@@ -32,26 +41,30 @@ class Interpreter {
 	}
 
 	public interprete(source: string) {
-		this.runFile(source);
+		return this.runFile(source);
 	}
 
 	private runFile(source: string) {
-		this.run(source);
-
-		if (Interpreter.hadError) {
-			return;
-		}
+		return this.run(source);
 	}
 
 	private run(source: string) {
 		const scanner = new Scanner(source);
 		const tokens = scanner.scanTokens();
-		this.parse(tokens);
+
+		if (Interpreter.hadError || Interpreter.hadRuntimeError) {
+			return;
+		}
+		return this.parse(tokens);
 	}
 
 	private parse(tokens: Token[]) {
 		const parser = new Parser(tokens);
-		console.log('parse result: ', parser.parse());
+		const syntaxTree = parser.parse();
+
+		if(syntaxTree) {
+			return Interpreter.interpreterMath.evaluate(syntaxTree);
+		}
 	}
 }
 
