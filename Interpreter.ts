@@ -14,6 +14,7 @@ type ErrorReporterOptions = {
 
 class Interpreter {
 	static hadError = false;
+	static hadRuntimeError = false;
 
 	static error(token: Token, message: string) {
 		if(token.type === TOKEN_TYPES.EOF) {
@@ -21,6 +22,11 @@ class Interpreter {
 		} else {
 			this.signalError(token.line, 'at' + ` "${token.lexeme}". ` + message);
 		}
+	}
+
+	static runtimeError(token: Token, message: string) {
+		console.error(`\x1b[33m [Line ${token.line}] Error: ${message} \x1b[0m`);
+		this.hadRuntimeError = true;
 	}
 
 	static signalError(line: number, message: string) {
@@ -40,7 +46,7 @@ class Interpreter {
 	private runFile(source: string) {
 		this.run(source);
 
-		if (Interpreter.hadError) {
+		if (Interpreter.hadError || Interpreter.hadRuntimeError) {
 			return;
 		}
 	}

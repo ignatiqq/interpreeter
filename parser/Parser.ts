@@ -27,7 +27,7 @@ export class Parser {
             return this.expression();
         } catch (error) {
             console.error(error);
-            return null;
+            return;
         }
     }
 
