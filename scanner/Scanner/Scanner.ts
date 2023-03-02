@@ -137,7 +137,8 @@ class Scanner implements IScanner {
                 break;
             // comment and division lexical analyze:
             case '/':
-                if (this.match('/')) {
+                console.log('peekmatch: ', this.peek(), this.peekMatch('/'))
+                if (this.peekMatch('/') && (this.peekMatch('/', {offset: 1}) || this.peekMatch('*', {offset: 1}))) {
                     this.skipComments();
                 } else {
                     this.addToken(TOKEN_TYPES.SLASH);
@@ -265,7 +266,7 @@ class Scanner implements IScanner {
     private addToken(type: string, literal: number | string | null = null) {
         const lexeme = type === TOKEN_TYPES.EOF ? '' : this.sourceCode.slice(this.start, this.coursor);
         const token = new Token({ type, lexeme, literal, line: this.line });
-        console.log(token);
+        console.log('in tokenizer: ', token);
         this.tokens.push(token);
     }
 

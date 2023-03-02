@@ -42,6 +42,9 @@ export class InterpreeterMath implements ExprVisitor<any> {
                 return Number(left) - Number(right);
             case TOKEN_TYPES.SLASH:
                 this.checkNumberOperands(expr.operator, left, right);
+                if(left === 0 || right === 0) {
+                    return 0;
+                }
                 return Number(left) / Number(right);
             case TOKEN_TYPES.EQUAL_EQUAL: 
                 return this.isEqual(left, right);
