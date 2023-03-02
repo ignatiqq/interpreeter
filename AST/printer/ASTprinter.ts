@@ -6,7 +6,7 @@ interface ASTPrinterMethods {
 
 export class ASTPrinter implements ExprVisitor<string>, ASTPrinterMethods {
     print(expr: Expr) {
-        this.visit(expr);
+        return this.visit(expr);
     }
 
     visit(expr: Expr) {
@@ -43,4 +43,20 @@ export class ASTPrinter implements ExprVisitor<string>, ASTPrinterMethods {
     visitUnaryExpr(expr: UnaryExpr) {
         return this.parenthesize(expr.operator.lexeme, expr.expression);
     }
+
+    // visitComparisonExpr(expr: ComparisonExpr) {
+    //     return this.parenthesize(expr.operator.lexeme, expr.left, expr.right);
+    // }
+
+    // visitFactorExpr(expr: FactorExpr) {
+    //     return this.parenthesize(expr.operator.lexeme, expr.left, expr.right);
+    // }
+
+    // visitTermExpr(expr: TermExpr) {
+    //     return this.parenthesize(expr.operator.lexeme, expr.left, expr.right);
+    // };
+
+    // visitEqualityExpr(expr: EqualityExpr) {
+    //     return this.parenthesize(expr.operator.lexeme, expr.left, expr.right);
+    // };
 }

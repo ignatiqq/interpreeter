@@ -1,5 +1,5 @@
 import { ASTPrinter } from "../AST/printer/ASTprinter";
-import { BinaryExpr, UnaryExpr, GroupingExpr, LiteralExpr } from "../AST/Expressions";
+import { BinaryExpr, UnaryExpr, GroupingExpr, LiteralExpr } from "../expressions/Expressions";
 import Token from '../tokens/Token/Token';
 import {TOKEN_TYPES} from '../tokens/constants/tokensType';
 

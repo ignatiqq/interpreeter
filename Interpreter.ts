@@ -1,3 +1,5 @@
+import { InterpreeterMath } from './AST/interpreeter';
+import { ASTPrinter } from './AST/printer/ASTprinter';
 import { Parser } from './parser/Parser';
 import Scanner from './scanner/Scanner/Scanner';
 import { TOKEN_TYPES } from './tokens/constants/tokensType';
@@ -51,7 +53,13 @@ class Interpreter {
 
 	private parse(tokens: Token[]) {
 		const parser = new Parser(tokens);
-		console.log('parse result: ', parser.parse());
+		const syntaxTree = parser.parse();
+
+		if(syntaxTree) {
+			console.log({syntaxTree});
+			console.log(new ASTPrinter().print(syntaxTree));
+			console.log("MATH:", new InterpreeterMath().evaluate(syntaxTree))
+		}
 	}
 }
 
