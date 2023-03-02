@@ -15,6 +15,7 @@ type ErrorReporterOptions = {
 class Interpreter {
 	static hadError = false;
 	static hadRuntimeError = false;
+	static interpreterMath = new InterpreeterMath();
 
 	static error(token: Token, message: string) {
 		if(token.type === TOKEN_TYPES.EOF) {
@@ -40,21 +41,21 @@ class Interpreter {
 	}
 
 	public interprete(source: string) {
-		this.runFile(source);
+		return this.runFile(source);
 	}
 
 	private runFile(source: string) {
-		this.run(source);
-
-		if (Interpreter.hadError || Interpreter.hadRuntimeError) {
-			return;
-		}
+		return this.run(source);
 	}
 
 	private run(source: string) {
 		const scanner = new Scanner(source);
 		const tokens = scanner.scanTokens();
-		this.parse(tokens);
+
+		if (Interpreter.hadError || Interpreter.hadRuntimeError) {
+			return;
+		}
+		return this.parse(tokens);
 	}
 
 	private parse(tokens: Token[]) {
@@ -62,9 +63,7 @@ class Interpreter {
 		const syntaxTree = parser.parse();
 
 		if(syntaxTree) {
-			console.log({syntaxTree});
-			console.log(new ASTPrinter().print(syntaxTree));
-			console.log("MATH:", new InterpreeterMath().evaluate(syntaxTree))
+			return Interpreter.interpreterMath.evaluate(syntaxTree);
 		}
 	}
 }

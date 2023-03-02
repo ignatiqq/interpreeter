@@ -6,4 +6,6 @@ const sourceCode = fs.readFileSync(path.resolve(__dirname, './code.something'), 
 
 const interpreter = new Interpreter();
 
-const tokens = interpreter.interprete(sourceCode);
+const interpreted = interpreter.interprete(sourceCode);
+
+console.log({interpreted})
