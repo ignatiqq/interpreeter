@@ -17,4 +17,5 @@ export const RESERVED_TOKEN_KEYWORDS = {
     'this': TOKEN_TYPES.THIS,
     'var': TOKEN_TYPES.VAR,
     'while': TOKEN_TYPES.WHILE,
+    'print': TOKEN_TYPES.PRINT
 }

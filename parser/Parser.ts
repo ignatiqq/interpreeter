@@ -1,6 +1,7 @@
 import { ParseError } from "../error/error";
 import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
+import { ExpressionStmt, PrintStmt, Stmt } from "../statements/statements";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
 import Token from "../tokens/Token/Token";
 
@@ -24,11 +25,45 @@ export class Parser {
 
     parse() {
         try {
-            return this.expression();
+            const statements: Stmt[] = [];
+
+            while(!this.isAtEnd()) {
+                console.log(this.tokens, this.coursor);
+                statements.push(this.statement());
+            }
+
+            return statements;
         } catch (error) {
             console.error(error);
             return;
         }
+    }
+
+    statement() {
+        if(this.match(TOKEN_TYPES.PRINT)) return this.printStatement();
+        return this.expressionStatement();
+    }
+
+    /**
+     * мы берем expression значения токенов, потомучто 
+     * в принт можно передать как бинарные так унарные, так 
+     * и сложные выражения со скобками умножением и тд
+     */
+    printStatement() {
+        const expr = this.expression();
+        // SEMICOLON after expression is required
+        // in our language
+        this.consume(TOKEN_TYPES.SEMICOLON, 'Semicolon after expression are required');
+        // add expression arg to print
+        return new PrintStmt(expr);
+    }
+
+    expressionStatement() {
+        const expr = this.expression();
+        // SEMICOLON after expression is required
+        // in our language
+        this.consume(TOKEN_TYPES.SEMICOLON, 'Semicolon after expression are required');
+        return new ExpressionStmt(expr);
     }
 
     expression(): Expr {

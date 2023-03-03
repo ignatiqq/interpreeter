@@ -124,16 +124,40 @@ class Scanner implements IScanner {
             // // and if it matches well skip coursor
             case '!':
                 // we'll match next symbol and skip it if it matches
-                this.addToken(this.eat('=') ? TOKEN_TYPES.NOT_EQUAL : TOKEN_TYPES.NOT);
+                if(this.peekMatch('=', {offset: 1})) {
+                    this.eat('=');
+                    this.addToken(TOKEN_TYPES.NOT_EQUAL);
+                } else {
+                    this.eat('!');
+                    this.addToken(TOKEN_TYPES.NOT);
+                }
                 break;
             case '=':
-                this.addToken(this.eat('=') ? TOKEN_TYPES.EQUAL_EQUAL : TOKEN_TYPES.EQUAL);
+                if(this.peekMatch('=', {offset: 1})) {
+                    this.eat('==');
+                    this.addToken(TOKEN_TYPES.EQUAL_EQUAL);
+                } else {
+                    this.eat('=');
+                    this.addToken(TOKEN_TYPES.EQUAL);
+                }
                 break;
             case '<':
-                this.addToken(this.eat('=') ? TOKEN_TYPES.LESS_EQUAL : TOKEN_TYPES.LESS);
+                if(this.peekMatch('=', {offset: 1})) {
+                    this.eat('<=');
+                    this.addToken(TOKEN_TYPES.LESS_EQUAL);
+                } else {
+                    this.eat('<');
+                    this.addToken(TOKEN_TYPES.LESS);
+                }
                 break;
             case '>':
-                this.addToken(this.eat('=') ? TOKEN_TYPES.GREATER_EQUAL : TOKEN_TYPES.GREATER);
+                if(this.peekMatch('=', {offset: 1})) {
+                    this.eat('>=');
+                    this.addToken(TOKEN_TYPES.GREATER_EQUAL);
+                } else {
+                    this.eat('>');
+                    this.addToken(TOKEN_TYPES.GREATER);
+                }
                 break;
             // comment and division lexical analyze:
             case '/':

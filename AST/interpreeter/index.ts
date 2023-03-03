@@ -1,16 +1,32 @@
 import { RuntimeError } from "../../error/error";
 import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr } from "../../expressions/Expressions";
 import Interpreter from "../../Interpreter";
+import { ExpressionStmt, PrintStmt, Stmt, StmtVisitor } from "../../statements/statements";
 import { TOKEN_TYPES } from "../../tokens/constants/tokensType";
 import Token from "../../tokens/Token/Token";
 
 type LiteralReturnType = string | number | boolean | null;
 
-export class InterpreeterMath implements ExprVisitor<any> {
-    evaluate(expr: Expr): LiteralReturnType | undefined {
+export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
+    interprete(stmts: Stmt[]) {
+        try {
+            for(const stmt of stmts) {
+                this.execute(stmt);
+            }
+        } catch (error) {
+            Interpreter.runtimeError((error as RuntimeError).token, (error as RuntimeError).message);
+        }
+    }
+
+    private execute(stmt: Stmt) {
+        stmt.accept<void>(this);
+    }
+
+    evaluate(expr: Expr): LiteralReturnType | undefined | void {
         try {
             return expr.accept(this);
         } catch (error) {
+            console.log({error})
             Interpreter.runtimeError((error as RuntimeError).token, (error as RuntimeError).message);
         }
         
@@ -114,4 +130,18 @@ export class InterpreeterMath implements ExprVisitor<any> {
         if(typeof val === 'undefined') return false;
         return Boolean(val);
     }
+
+    // stmt visitors
+
+    visitExpressionStmt(stmt: ExpressionStmt) {
+        this.evaluate(stmt.expression);
+    };
+
+    visitPrintStmr(stmt: PrintStmt) {
+        // выполняем и получаем значение потомучто в print мы передаем
+        // только expression мы не можем передать statement (консрукцию языка)
+        // потомучто оно не ресолвиться в значение (value)
+        const expr = this.evaluate(stmt.expression);
+        console.log(`${expr}`);
+    };
 }

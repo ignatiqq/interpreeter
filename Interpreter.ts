@@ -1,4 +1,4 @@
-import { InterpreeterMath } from './AST/interpreeter';
+import { Interpreeter } from './AST/interpreeter';
 import { ASTPrinter } from './AST/printer/ASTprinter';
 import { Parser } from './parser/Parser';
 import Scanner from './scanner/Scanner/Scanner';
@@ -12,10 +12,10 @@ type ErrorReporterOptions = {
 }
 
 
-class Interpreter {
+class Language {
 	static hadError = false;
 	static hadRuntimeError = false;
-	static interpreterMath = new InterpreeterMath();
+	static interpreter = new Interpreeter();
 
 	static error(token: Token, message: string) {
 		if(token.type === TOKEN_TYPES.EOF) {
@@ -36,7 +36,7 @@ class Interpreter {
 
 	static reportError(options: ErrorReporterOptions) {
 		const { line, where, message } = options;
-		Interpreter.hadError = true;
+		Language.hadError = true;
 		console.error(`\x1b[33m [Line ${line}] Error: ${message} \x1b[0m`);
 	}
 
@@ -52,7 +52,7 @@ class Interpreter {
 		const scanner = new Scanner(source);
 		const tokens = scanner.scanTokens();
 
-		if (Interpreter.hadError || Interpreter.hadRuntimeError) {
+		if (Language.hadError || Language.hadRuntimeError) {
 			return;
 		}
 		return this.parse(tokens);
@@ -63,9 +63,10 @@ class Interpreter {
 		const syntaxTree = parser.parse();
 
 		if(syntaxTree) {
-			return Interpreter.interpreterMath.evaluate(syntaxTree);
+			Language.interpreter.interprete(syntaxTree);
+			// return Interpreter.interpreterMath.evaluate(syntaxTree);
 		}
 	}
 }
 
-export default Interpreter;
+export default Language;
