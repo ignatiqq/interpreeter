@@ -47,8 +47,6 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         const left = this.evaluate(expr.left);
         const right = this.evaluate(expr.right);
 
-        console.log({left, right})
-
         switch(expr.operator.type) {
             case TOKEN_TYPES.STAR:
                 this.checkNumberOperands(expr.operator, left, right);
@@ -83,7 +81,6 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
                     typeof left === 'string' && typeof right === 'number' ||
                     typeof left === 'number' && typeof right === 'string'
                 ) {
-                    console.log(left, right)
                     return String(left) + String(right);
                 } else if(typeof left === 'number' && typeof right === 'number') {
                     return left + right;

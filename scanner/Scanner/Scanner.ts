@@ -182,8 +182,10 @@ class Scanner implements IScanner {
                 this.line++;
                 break;
 
-            case '"':
-                this.parseString(); break;
+            case `"`:
+                this.parseString(`"`); break;
+            case `'`:
+                this.parseString(`'`); break;
 
             default: {
                 // tokenize all numbers
@@ -261,16 +263,16 @@ class Scanner implements IScanner {
     /**
      * Parse strign eat doublequoutes and tokenize content string
      */
-    private parseString() {
-        this.eat('"');
+    private parseString(val: `'` | `"`) {
+        this.eat(val);
 
-        const content = this.readWhileMatching(() => !this.peekMatch('"') && !this.isAtEnd());
+        const content = this.readWhileMatching(() => !this.peekMatch(val) && !this.isAtEnd());
 
         if (this.isAtEnd()) {
             Interpreter.signalError(this.line, "Unterminated string.");
         }
 
-        this.eat('"');
+        this.eat(val);
         this.addToken(TOKEN_TYPES.STRING, content);
     }
 
