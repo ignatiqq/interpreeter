@@ -1,17 +1,26 @@
 type TokenContructorType = {
     // language keywords
+    // ключ для определенной лексемы, например
+    // LEFT_PAREN: '{'
+    // где: 
+    // лексема это '{', а 
+    // type: LEFT_PAREN
     type: string;
-    // key (something-meaningful) word
     lexeme: string;
-    literal: number | string | null;
+    // литерал в случае обработки переменных почти всегда тоже самое что и лексема,
+    // тоесть литерал это например название переменной
+    literal: TokenLiteralType;
     // we need to save token line to show errors with line
+    // для обработки ошибок
     line: number;
 }
+
+export type TokenLiteralType = number | string | null;
 
 class Token {
     type: string;
     lexeme: string;
-    literal: number | string | null;
+    literal: TokenLiteralType;
     line: number;
 
     constructor(options: TokenContructorType) {

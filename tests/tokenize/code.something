@@ -1,5 +1,5 @@
-print (1 + 2) * 3;
+var hello = 'world';
+print hello;
 
-print 15 + 'chelovec';
-
-print true;
+var nullish;
+print nullish;

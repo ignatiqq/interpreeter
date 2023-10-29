@@ -11,10 +11,15 @@ export interface ExprVisitor<T> {
     visitGroupingExpr: (expr: GroupingExpr) => T;
     visitLiteralExpr: (expr: LiteralExpr) => T;
     visitUnaryExpr: (expr: UnaryExpr) => T;
+    visitVariableExpr: (expr: VariableExpr) => T;
+    // visitIdentifierExpr: (expr: IdentifierExpr) => T;
+    
+    // just binary 
     // visitFactorExpr: (expr: FactorExpr) => T;
     // visitTermExpr: (expr: TermExpr) => T;
     // visitComparisonExpr: (expr: ComparisonExpr) => T;
     // visitEqualityExpr: (expr: EqualityExpr) => T;
+    // just binary 
 }
 
 /**
@@ -26,8 +31,6 @@ export interface ExprVisitor<T> {
 export abstract class Expr {
     abstract accept<T>(visitor: ExprVisitor<T>): T
 }
-
-type ExprOptionsType = {left: Expr, operator: Token, right: Expr};
 
 /**
  * Binary operation expression in our Syntax tree
@@ -88,6 +91,39 @@ export class UnaryExpr extends Expr {
         return visitor.visitUnaryExpr(this);
     }
 }
+
+// Variable (IDENTIFIER is expression here 
+// because variable defines by it's "name"
+// "name" represents value
+// "name" === value
+// for example some_val = 5;
+// some_val === 5;
+// 5
+export class VariableExpr extends Expr {
+    name: Token;
+
+    constructor(name: Token) {
+        super();
+        this.name = name;
+    }
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitVariableExpr(this);
+    }
+}
+
+// export class IdentifierExpr extends Expr {
+//     identifier: Token;
+
+//     constructor(identifier: Token) {
+//         super();
+//         this.identifier = identifier;
+//     }
+
+//     accept<T>(visitor: ExprVisitor<T>): T {
+//         return visitor.visitIdentifierExpr(this);
+//     }
+// }
 
 // export class FactorExpr extends Expr {
 //     left: Expr;

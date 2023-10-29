@@ -1,5 +1,5 @@
 import { TOKEN_TYPES } from '../../tokens/constants/tokensType';
-import Token from '../../tokens/Token/Token';
+import Token, { TokenLiteralType } from '../../tokens/Token/Token';
 import Interpreter from '../../Interpreter';
 
 import { RESERVED_TOKEN_KEYWORDS } from '../constants/keywords';
@@ -197,8 +197,9 @@ class Scanner implements IScanner {
                     if (this.isAlpha(rangeSymbol)) {
                         this.parseIdentifier();
                     } else {
+                        this.eat(rangeSymbol);
                         // we must to stop our shile loop if it's error
-                        Interpreter.signalError(this.line, '(in default case) Unexpected token: ' + rangeSymbol); break;
+                        Interpreter.signalError(this.line, 'Unexpected token: ' + rangeSymbol); break;
                     }
                 break;
             }
@@ -242,7 +243,7 @@ class Scanner implements IScanner {
         if (Boolean(RESERVED_TOKEN_KEYWORDS[variableName as keyof typeof RESERVED_TOKEN_KEYWORDS])) {
             this.addToken(RESERVED_TOKEN_KEYWORDS[variableName as keyof typeof RESERVED_TOKEN_KEYWORDS], variableName);
         } else {
-            this.addToken(TOKEN_TYPES.VAR, variableName);
+            this.addToken(TOKEN_TYPES.IDENTIFIER, variableName);
         }
     }
 
@@ -289,10 +290,9 @@ class Scanner implements IScanner {
         return this.sourceCode.slice(start, this.coursor);
     }
 
-    private addToken(type: string, literal: number | string | null = null) {
+    private addToken(type: string, literal: TokenLiteralType = null) {
         const lexeme = type === TOKEN_TYPES.EOF ? '' : this.sourceCode.slice(this.start, this.coursor);
         const token = new Token({ type, lexeme, literal, line: this.line });
-        console.log('in tokenizer: ', token);
         this.tokens.push(token);
     }
 

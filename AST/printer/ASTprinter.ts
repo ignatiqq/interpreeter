@@ -4,12 +4,14 @@ interface ASTPrinterMethods {
     parenthesize<T>(name: string, ...expr: Expr[]): string;
 }
 
+// @ts-ignore
 export class ASTPrinter implements ExprVisitor<string>, ASTPrinterMethods {
     print(expr: Expr) {
         return this.visit(expr);
     }
 
     visit(expr: Expr) {
+        // @ts-ignore
         return expr.accept(this);
     }
 
@@ -19,6 +21,7 @@ export class ASTPrinter implements ExprVisitor<string>, ASTPrinterMethods {
 
         for(const expr of exprs) {
             // recursively parse all tree nodes to flat values to string
+            // @ts-ignore
             result += ` ${expr.accept(this)}`;
         }
         result += ')';
@@ -35,7 +38,7 @@ export class ASTPrinter implements ExprVisitor<string>, ASTPrinterMethods {
     }
 
     visitLiteralExpr(expr: LiteralExpr) {
-        if(expr.literal === null) return 'null';
+        if(expr.literal === null) return 'nil';
         if (typeof expr.literal === "string") return `"${expr.literal}"`
         return this.parenthesize(`${expr.literal}`);
     }

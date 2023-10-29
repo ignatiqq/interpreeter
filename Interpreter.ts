@@ -1,5 +1,6 @@
 import { Interpreeter } from './AST/interpreeter';
 import { ASTPrinter } from './AST/printer/ASTprinter';
+import { Enviroment, IEnviroment } from './Enviroment';
 import { Parser } from './parser/Parser';
 import Scanner from './scanner/Scanner/Scanner';
 import { TOKEN_TYPES } from './tokens/constants/tokensType';
@@ -15,7 +16,7 @@ type ErrorReporterOptions = {
 class Language {
 	static hadError = false;
 	static hadRuntimeError = false;
-	static interpreter = new Interpreeter();
+	static interpreter = new Interpreeter(new Enviroment());
 
 	static error(token: Token, message: string) {
 		if(token.type === TOKEN_TYPES.EOF) {
@@ -31,6 +32,7 @@ class Language {
 	}
 
 	static signalError(line: number, message: string) {
+		// we can add lexeme here instead empty "where"
 		this.reportError({ line, where: "", message });
 	}
 
@@ -55,17 +57,22 @@ class Language {
 		if (Language.hadError || Language.hadRuntimeError) {
 			return;
 		}
+
 		return this.parse(tokens);
 	}
 
 	private parse(tokens: Token[]) {
 		const parser = new Parser(tokens);
+		
+		// statements tree
 		const syntaxTree = parser.parse();
 
-		if(syntaxTree) {
-			Language.interpreter.interprete(syntaxTree);
-			// return Interpreter.interpreterMath.evaluate(syntaxTree);
+		if(Language.hadError || !syntaxTree) {
+			return syntaxTree;
 		}
+
+		return Language.interpreter.interprete(syntaxTree);
+		// return Interpreter.interpreterMath.evaluate(syntaxTree);
 	}
 }
 
