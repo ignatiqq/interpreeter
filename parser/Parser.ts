@@ -1,5 +1,5 @@
 import { ParseError } from "../error/error";
-import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr } from "../expressions/Expressions";
+import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
 import { ExpressionStmt, PrintStmt, Stmt, VarStmt } from "../statements/statements";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
@@ -110,17 +110,52 @@ export class Parser {
     }
 
     expression(): Expr {
-        return this.equality();
+        return this.assignment();
     }
 
-    equality(): BinaryExprType {
+    // присваивание |
+    //              v
+    // var variable = 'value';
+    assignment(): Expr  {
+        // выражение может быть слева
+        //                                      |
+        //                                      v
+        // это может быть либо VarExpr -> var name =
+        //                                   |
+        //                                   v
+        // либо любым Expr Expr -> getObj().x = 
+        
+        const expr = this.equality();
+
+        if(this.match(TOKEN_TYPES.EQUAL)) {
+            // equals token to reoport to the error (line)
+            const equals = this.previous();
+            // вычисляем значение справа (Expression(s))
+            const value = this.assignment();
+
+            // проверяем является ли expression Identifier (VarExpr)
+            if(expr instanceof VariableExpr) {
+                // если предыдущий токен это 
+                // VarExpr, тоесть identifier,
+                // то мы возвращаем Assignment Expression
+                const token = expr.token;
+                return new AssignmentExpr(token, value);
+            }
+
+            this.error(equals, "Invalid assignment target.");
+        }
+        
+        return expr;
+    }
+
+    equality(): Expr {
         // любой expression,
         // будь то primary (number) или binary expression
         // изза рекурсии и внизсходящиего алгоритма парсера
         // сначала берем самое приоритетное выражение парсера (число -> отрицание -> умножение) и т.д.
-        let expr: BinaryExprType = this.comparison();
+        let expr: Expr = this.comparison();
 
-        while(this.matchMany(TOKEN_TYPES.EQUAL, TOKEN_TYPES.NOT_EQUAL)) {
+        while(this.matchMany(TOKEN_TYPES.EQUAL_EQUAL, TOKEN_TYPES.NOT_EQUAL)) {
             // мы уже увеличели каутнер mathMany методом, поэтому берем предыдущий токен
             const operator = this.previous();
             const right = this.comparison();
@@ -131,8 +166,8 @@ export class Parser {
         return expr;
     }
 
-    comparison(): BinaryExprType {
-        let expr: BinaryExprType = this.term();
+    comparison(): Expr {
+        let expr: Expr = this.term();
 
         while(this.matchMany(TOKEN_TYPES.LESS, TOKEN_TYPES.GREATER, TOKEN_TYPES.GREATER_EQUAL, TOKEN_TYPES.LESS_EQUAL)) {
             const operator = this.previous();
@@ -143,8 +178,8 @@ export class Parser {
         return expr;
     }
 
-    term(): BinaryExprType {
-        let expr: BinaryExprType = this.factor();
+    term(): Expr {
+        let expr: Expr = this.factor();
 
         while(this.matchMany(TOKEN_TYPES.MINUS, TOKEN_TYPES.PLUS)) {
             const operator = this.previous();
@@ -155,8 +190,8 @@ export class Parser {
         return expr;
     }
 
-    factor(): BinaryExprType {
-        let expr: BinaryExprType = this.unary();
+    factor(): Expr {
+        let expr: Expr = this.unary();
         // error in this.match (because this.previous is undefined)
         // Error here get type of undefined
 
@@ -172,9 +207,9 @@ export class Parser {
     /**
      * unary expression creator also can return PrimaryExprReturnType type
      * because it's recursive and it have access to get primary expression token
-     * @returns {UnaryExprReturnType}
+     * @returns {Expr}
      */
-    unary(): UnaryExprReturnType {
+    unary(): Expr {
         if(this.matchMany(TOKEN_TYPES.NOT, TOKEN_TYPES.MINUS)) {
             const operator = this.previous();
             // 2 !
@@ -191,9 +226,9 @@ export class Parser {
     /**
      * primary method which return Literal and Grouping expression
      * primitive data types
-     * @returns {PrimaryExprReturnType}
+     * @returns {Expr}
      */
-    primary(): PrimaryExprReturnType {
+    primary(): Expr {
         if(this.match(TOKEN_TYPES.FALSE)) return new LiteralExpr(false);
         if(this.match(TOKEN_TYPES.TRUE)) return new LiteralExpr(true);
         if(this.match(TOKEN_TYPES.NULL)) return new LiteralExpr(null);

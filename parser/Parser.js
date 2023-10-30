@@ -94,7 +94,36 @@ var Parser = /** @class */ (function () {
         return new statements_1.ExpressionStmt(expr);
     };
     Parser.prototype.expression = function () {
-        return this.equality();
+        return this.assignment();
+    };
+    // присваивание |
+    //              v
+    // var variable = 'value';
+    Parser.prototype.assignment = function () {
+        // выражение может быть слева
+        //                                      |
+        //                                      v
+        // это может быть либо VarExpr -> var name =
+        //                                   |
+        //                                   v
+        // либо любым Expr Expr -> getObj().x = 
+        var expr = this.equality();
+        if (this.match(tokensType_1.TOKEN_TYPES.EQUAL)) {
+            // equals token to reoport to the error (line)
+            var equals = this.previous();
+            // вычисляем значение справа (Expression(s))
+            var value = this.assignment();
+            // проверяем является ли expression Identifier (VarExpr)
+            if (expr instanceof Expressions_1.VariableExpr) {
+                // если предыдущий токен это 
+                // VarExpr, тоесть identifier,
+                // то мы возвращаем Assignment Expression
+                var token = expr.token;
+                return new Expressions_1.AssignmentExpr(token, value);
+            }
+            this.error(equals, "Invalid assignment target.");
+        }
+        return expr;
     };
     Parser.prototype.equality = function () {
         // любой expression,
@@ -102,7 +131,7 @@ var Parser = /** @class */ (function () {
         // изза рекурсии и внизсходящиего алгоритма парсера
         // сначала берем самое приоритетное выражение парсера (число -> отрицание -> умножение) и т.д.
         var expr = this.comparison();
-        while (this.matchMany(tokensType_1.TOKEN_TYPES.EQUAL, tokensType_1.TOKEN_TYPES.NOT_EQUAL)) {
+        while (this.matchMany(tokensType_1.TOKEN_TYPES.EQUAL_EQUAL, tokensType_1.TOKEN_TYPES.NOT_EQUAL)) {
             // мы уже увеличели каутнер mathMany методом, поэтому берем предыдущий токен
             var operator = this.previous();
             var right = this.comparison();
@@ -142,7 +171,7 @@ var Parser = /** @class */ (function () {
     /**
      * unary expression creator also can return PrimaryExprReturnType type
      * because it's recursive and it have access to get primary expression token
-     * @returns {UnaryExprReturnType}
+     * @returns {Expr}
      */
     Parser.prototype.unary = function () {
         if (this.matchMany(tokensType_1.TOKEN_TYPES.NOT, tokensType_1.TOKEN_TYPES.MINUS)) {
@@ -159,7 +188,7 @@ var Parser = /** @class */ (function () {
     /**
      * primary method which return Literal and Grouping expression
      * primitive data types
-     * @returns {PrimaryExprReturnType}
+     * @returns {Expr}
      */
     Parser.prototype.primary = function () {
         if (this.match(tokensType_1.TOKEN_TYPES.FALSE))

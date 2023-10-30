@@ -7,14 +7,18 @@ var Enviroment = /** @class */ (function () {
         this.map = new Map();
     }
     Enviroment.prototype.define = function (name, val) {
-        console.log('define name: ', name);
         this.map.set(name, val);
+    };
+    Enviroment.prototype.assign = function (token, val) {
+        if (this.map.has(token.lexeme)) {
+            return this.map.get(token.lexeme);
+        }
+        throw new error_1.RuntimeError(token, 'Undefined variable ' + token.lexeme);
     };
     Enviroment.prototype.delete = function (name) {
         this.map.delete(name);
     };
     Enviroment.prototype.get = function (token) {
-        console.log("env.get map: ", this.map, 'token: ', token);
         if (this.map.has(token.lexeme)) {
             return this.map.get(token.lexeme);
         }

@@ -1,7 +1,7 @@
 import { RuntimeError } from "../error/error";
 import Token from "../tokens/Token/Token";
 
-type VariableValueType = string | number | null
+export type VariableValueType = string | number | boolean | null;
 
 export interface IEnviroment {
     define(name: string, value: VariableValueType): void;
@@ -18,8 +18,15 @@ export class Enviroment implements IEnviroment {
     }
 
     define(name: string, val: VariableValueType) {
-        console.log('define name: ', name);
         this.map.set(name, val);
+    }
+
+    assign(token: Token, val: VariableValueType) {
+        if(this.map.has(token.lexeme)) {
+            return this.map.get(token.lexeme);
+        }
+
+        throw new RuntimeError(token, 'Undefined variable ' + token.lexeme);
     }
 
     delete(name: string) {
@@ -27,7 +34,6 @@ export class Enviroment implements IEnviroment {
     }
 
     get(token: Token) {
-        console.log("env.get map: ", this.map, 'token: ',token);
         if(this.map.has(token.lexeme)) {
             return this.map.get(token.lexeme);
         }

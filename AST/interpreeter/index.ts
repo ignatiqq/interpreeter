@@ -1,6 +1,6 @@
 import { Enviroment } from "../../Enviroment";
 import { RuntimeError } from "../../error/error";
-import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr } from "../../expressions/Expressions";
+import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr } from "../../expressions/Expressions";
 import Interpreter from "../../Interpreter";
 import { ExpressionStmt, PrintStmt, Stmt, StmtVisitor, VarStmt } from "../../statements/statements";
 import { TOKEN_TYPES } from "../../tokens/constants/tokensType";
@@ -129,6 +129,14 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         }
     };
 
+    visitAssignmentExpr(expr: AssignmentExpr) {
+        const val = expr.expr !== null ? this.evaluate(expr.expr) : null;
+
+        this.enviroment.assign(expr.token, val || null);
+
+        return val;
+    }
+
     isEqual(val: any, val2: any) {
         if(val === null && val2 === null) return true;
         return val === val2;
@@ -161,7 +169,7 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     // а значит имя = значение (имя преобразуется в значение, а значение = Expression)
     visitVariableExpr(expr: VariableExpr) {
         // берем переменную из enviroment по имени
-        return this.enviroment.get(expr.name);
+        return this.enviroment.get(expr.token);
     }
 
     // stmt visitors

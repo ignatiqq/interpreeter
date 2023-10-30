@@ -15,7 +15,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VariableExpr = exports.UnaryExpr = exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.Expr = void 0;
+exports.AssignmentExpr = exports.VariableExpr = exports.UnaryExpr = exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.Expr = void 0;
 /**
  * Expression abstract class for our syntax tree
  * Classes which will be inherited must define
@@ -95,9 +95,9 @@ exports.UnaryExpr = UnaryExpr;
 // 5
 var VariableExpr = /** @class */ (function (_super) {
     __extends(VariableExpr, _super);
-    function VariableExpr(name) {
+    function VariableExpr(token) {
         var _this = _super.call(this) || this;
-        _this.name = name;
+        _this.token = token;
         return _this;
     }
     VariableExpr.prototype.accept = function (visitor) {
@@ -106,69 +106,17 @@ var VariableExpr = /** @class */ (function (_super) {
     return VariableExpr;
 }(Expr));
 exports.VariableExpr = VariableExpr;
-// export class IdentifierExpr extends Expr {
-//     identifier: Token;
-//     constructor(identifier: Token) {
-//         super();
-//         this.identifier = identifier;
-//     }
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitIdentifierExpr(this);
-//     }
-// }
-// export class FactorExpr extends Expr {
-//     left: Expr;
-//     operator: Token;
-//     right: Expr;
-//     constructor(left: Expr, operator: Token, right: Expr) {
-//         super();
-//         this.left = left;
-//         this.right = right;
-//         this.operator = operator;
-//     }
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitFactorExpr(this);
-//     }
-// }
-// export class TermExpr extends Expr {
-//     left: Expr;
-//     operator: Token;
-//     right: Expr;
-//     constructor(left: Expr, operator: Token, right: Expr) {
-//         super();
-//         this.left = left;
-//         this.right = right;
-//         this.operator = operator;
-//     }
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitTermExpr(this);
-//     }
-// }
-// export class ComparisonExpr extends Expr {
-//     left: Expr;
-//     operator: Token;
-//     right: Expr;
-//     constructor(left: Expr, operator: Token, right: Expr) {
-//         super();
-//         this.left = left;
-//         this.right = right;
-//         this.operator = operator;
-//     }
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitComparisonExpr(this);
-//     }
-// }
-// export class EqualityExpr extends Expr {
-//     left: Expr;
-//     operator: Token;
-//     right: Expr;
-//     constructor(left: Expr, operator: Token, right: Expr) {
-//         super();
-//         this.left = left;
-//         this.right = right;
-//         this.operator = operator;
-//     }
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitEqualityExpr(this);
-//     }
-// }
+var AssignmentExpr = /** @class */ (function (_super) {
+    __extends(AssignmentExpr, _super);
+    function AssignmentExpr(token, expr) {
+        var _this = _super.call(this) || this;
+        _this.token = token;
+        _this.expr = expr;
+        return _this;
+    }
+    AssignmentExpr.prototype.accept = function (visitor) {
+        return visitor.visitAssignmentExpr(this);
+    };
+    return AssignmentExpr;
+}(Expr));
+exports.AssignmentExpr = AssignmentExpr;

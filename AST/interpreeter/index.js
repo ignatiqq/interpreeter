@@ -113,6 +113,11 @@ var Interpreeter = /** @class */ (function () {
         }
     };
     ;
+    Interpreeter.prototype.visitAssignmentExpr = function (expr) {
+        var val = expr.expr !== null ? this.evaluate(expr.expr) : null;
+        this.enviroment.assign(expr.token, val || null);
+        return val;
+    };
     Interpreeter.prototype.isEqual = function (val, val2) {
         if (val === null && val2 === null)
             return true;
@@ -142,7 +147,7 @@ var Interpreeter = /** @class */ (function () {
     // а значит имя = значение (имя преобразуется в значение, а значение = Expression)
     Interpreeter.prototype.visitVariableExpr = function (expr) {
         // берем переменную из enviroment по имени
-        return this.enviroment.get(expr.name);
+        return this.enviroment.get(expr.token);
     };
     // stmt visitors
     Interpreeter.prototype.visitExpressionStmt = function (stmt) {

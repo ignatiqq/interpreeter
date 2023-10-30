@@ -2,4 +2,6 @@ var hello = 'world';
 print hello;
 
 var nullish;
+nullish = 'hello world';
 print nullish;
+print nullish = 5;

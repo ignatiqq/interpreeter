@@ -1,3 +1,4 @@
+import { VariableValueType } from "../Enviroment";
 import Token from "../tokens/Token/Token";
 
 /** 
@@ -12,6 +13,7 @@ export interface ExprVisitor<T> {
     visitLiteralExpr: (expr: LiteralExpr) => T;
     visitUnaryExpr: (expr: UnaryExpr) => T;
     visitVariableExpr: (expr: VariableExpr) => T;
+    visitAssignmentExpr(expr: AssignmentExpr): T;
     // visitIdentifierExpr: (expr: IdentifierExpr) => T;
     
     // just binary 
@@ -100,11 +102,11 @@ export class UnaryExpr extends Expr {
 // some_val === 5;
 // 5
 export class VariableExpr extends Expr {
-    name: Token;
+    token: Token;
 
-    constructor(name: Token) {
+    constructor(token: Token) {
         super();
-        this.name = name;
+        this.token = token;
     }
 
     accept<T>(visitor: ExprVisitor<T>): T {
@@ -112,83 +114,19 @@ export class VariableExpr extends Expr {
     }
 }
 
-// export class IdentifierExpr extends Expr {
-//     identifier: Token;
+export class AssignmentExpr extends Expr {
+    // для какого токена осуществляется переприсваивание
+    token: Token;
+    // новое значение для перменной
+    expr: Expr;
 
-//     constructor(identifier: Token) {
-//         super();
-//         this.identifier = identifier;
-//     }
+    constructor(token: Token, expr: Expr) {
+        super();
+        this.token = token;
+        this.expr = expr;
+    }
 
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitIdentifierExpr(this);
-//     }
-// }
-
-// export class FactorExpr extends Expr {
-//     left: Expr;
-//     operator: Token;
-//     right: Expr;
-
-//     constructor(left: Expr, operator: Token, right: Expr) {
-//         super();
-//         this.left = left;
-//         this.right = right;
-//         this.operator = operator;
-//     }
-
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitFactorExpr(this);
-//     }
-// }
-
-// export class TermExpr extends Expr {
-//     left: Expr;
-//     operator: Token;
-//     right: Expr;
-
-//     constructor(left: Expr, operator: Token, right: Expr) {
-//         super();
-//         this.left = left;
-//         this.right = right;
-//         this.operator = operator;
-//     }
-
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitTermExpr(this);
-//     }
-// }
-
-// export class ComparisonExpr extends Expr {
-//     left: Expr;
-//     operator: Token;
-//     right: Expr;
-
-//     constructor(left: Expr, operator: Token, right: Expr) {
-//         super();
-//         this.left = left;
-//         this.right = right;
-//         this.operator = operator;
-//     }
-
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitComparisonExpr(this);
-//     }
-// }
-
-// export class EqualityExpr extends Expr {
-//     left: Expr;
-//     operator: Token;
-//     right: Expr;
-
-//     constructor(left: Expr, operator: Token, right: Expr) {
-//         super();
-//         this.left = left;
-//         this.right = right;
-//         this.operator = operator;
-//     }
-
-//     accept<T>(visitor: ExprVisitor<T>): T {
-//         return visitor.visitEqualityExpr(this);
-//     }
-// }
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitAssignmentExpr(this);    
+    }
+}
