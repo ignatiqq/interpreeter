@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Interpreeter = void 0;
+var Enviroment_1 = require("../../Enviroment");
 var error_1 = require("../../error/error");
 var Interpreter_1 = require("../../Interpreter");
 var tokensType_1 = require("../../tokens/constants/tokensType");
@@ -162,6 +163,25 @@ var Interpreeter = /** @class */ (function () {
         console.log("".concat(expr));
     };
     ;
+    Interpreeter.prototype.executeBlock = function (stmts, enviroment) {
+        var prev = this.enviroment;
+        try {
+            // рекурсивно проваливаемся в новый енвайромент
+            this.enviroment = enviroment;
+            for (var _i = 0, stmts_2 = stmts; _i < stmts_2.length; _i++) {
+                var stmt = stmts_2[_i];
+                this.execute(stmt);
+            }
+        }
+        finally {
+            // распутываем рекурсию
+            this.enviroment = prev;
+        }
+    };
+    Interpreeter.prototype.visitBlockStmt = function (stmt) {
+        this.executeBlock(stmt.stmts, new Enviroment_1.Enviroment(this.enviroment));
+        return null;
+    };
     return Interpreeter;
 }());
 exports.Interpreeter = Interpreeter;

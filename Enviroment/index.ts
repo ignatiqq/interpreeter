@@ -11,10 +11,16 @@ export interface IEnviroment {
 
 export class Enviroment implements IEnviroment {
     map: Map<string, VariableValueType>
+    /**
+     * realization of scope
+     * каждому инстансу "Enviroment" мы должны дать ссылку на внешний
+     */
+    enclosing: Enviroment | null;
 
     
-    constructor() {
+    constructor(enclosing: Enviroment | null = null) {
         this.map = new Map<string, VariableValueType>();
+        this.enclosing = enclosing ;
     }
 
     define(name: string, val: VariableValueType) {
@@ -23,8 +29,11 @@ export class Enviroment implements IEnviroment {
 
     assign(token: Token, val: VariableValueType) {
         if(this.map.has(token.lexeme)) {
-            return this.map.get(token.lexeme);
+            return this.map.set(token.lexeme, val);
         }
+
+        // @ts-ignore @TODO
+        if(!this.isGlobalEnviroment) return this.enclosing.assign(token, val);
 
         throw new RuntimeError(token, 'Undefined variable ' + token.lexeme);
     }
@@ -37,7 +46,15 @@ export class Enviroment implements IEnviroment {
         if(this.map.has(token.lexeme)) {
             return this.map.get(token.lexeme);
         }
+        
+        // @ts-ignore @TODO
+        // рекурсивный поиск перменных в областях видимости (евайроментах) выше
+        if(!this.isGlobalEnviroment) return this.enclosing.get(token);
 
         throw new RuntimeError(token, 'Undefined variable ' + token.lexeme);
+    }
+
+    get isGlobalEnviroment() {
+        return this.enclosing === null;
     }
 }

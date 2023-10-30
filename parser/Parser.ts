@@ -1,7 +1,7 @@
 import { ParseError } from "../error/error";
 import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
-import { ExpressionStmt, PrintStmt, Stmt, VarStmt } from "../statements/statements";
+import { BlockStmt, ExpressionStmt, PrintStmt, Stmt, VarStmt } from "../statements/statements";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
 import Token from "../tokens/Token/Token";
 
@@ -55,8 +55,8 @@ export class Parser {
     // или стригерит ошибку которая развернет стек и пуш в стейтментс не выполнится
     declaration(): Stmt {
         try {
-            console.log('token: ', this.tokens[this.coursor], 'check: ' + this.check(TOKEN_TYPES.VAR));
-            if(this.match(TOKEN_TYPES.VAR)) return this.varDeclaration();
+            if(this.match(TOKEN_TYPES.VAR)) return this.varStmtDeclaration();
+            if(this.match(TOKEN_TYPES.LEFT_BRACE)) return this.parenthlessBlock();
             return this.statement();
         } catch (error) {
             this.synchronize();
@@ -64,8 +64,29 @@ export class Parser {
         }
     }
 
-    varDeclaration(): Stmt {
-        console.log('var declar: ', this.tokens[this.coursor]);
+    parenthlessBlock() {
+        console.log("parenthlessBlock preV: ", this.previous());
+        return new BlockStmt(this.block());
+    }
+
+    block(): Stmt[] {
+        const statements = [];
+
+        while(!this.check(TOKEN_TYPES.RIGHT_BRACE) && !this.isAtEnd()) {
+            console.log("token: ", this.tokens[this.coursor]);
+            const stmt = this.declaration();
+            console.log("statmenet: ", stmt)
+            // @ts-ignore
+            statements.push(stmt);
+        }
+
+       console.log('block statements: ', statements);
+       console.log("token after: ", this.tokens[this.coursor]);
+        this.consume(TOKEN_TYPES.RIGHT_BRACE, 'Expected } after block.');
+        return statements;
+    }
+
+    varStmtDeclaration(): Stmt {
         const token = this.consume(TOKEN_TYPES.IDENTIFIER, 'Expected variable name');
 
         let intializer: Expr | null = null;

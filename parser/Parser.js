@@ -45,9 +45,10 @@ var Parser = /** @class */ (function () {
     // или стригерит ошибку которая развернет стек и пуш в стейтментс не выполнится
     Parser.prototype.declaration = function () {
         try {
-            console.log('token: ', this.tokens[this.coursor], 'check: ' + this.check(tokensType_1.TOKEN_TYPES.VAR));
             if (this.match(tokensType_1.TOKEN_TYPES.VAR))
-                return this.varDeclaration();
+                return this.varStmtDeclaration();
+            if (this.match(tokensType_1.TOKEN_TYPES.LEFT_BRACE))
+                return this.parenthlessBlock();
             return this.statement();
         }
         catch (error) {
@@ -55,8 +56,25 @@ var Parser = /** @class */ (function () {
             console.error(error);
         }
     };
-    Parser.prototype.varDeclaration = function () {
-        console.log('var declar: ', this.tokens[this.coursor]);
+    Parser.prototype.parenthlessBlock = function () {
+        console.log("parenthlessBlock preV: ", this.previous());
+        return new statements_1.BlockStmt(this.block());
+    };
+    Parser.prototype.block = function () {
+        var statements = [];
+        while (!this.check(tokensType_1.TOKEN_TYPES.RIGHT_BRACE) && !this.isAtEnd()) {
+            console.log("token: ", this.tokens[this.coursor]);
+            var stmt = this.declaration();
+            console.log("statmenet: ", stmt);
+            // @ts-ignore
+            statements.push(stmt);
+        }
+        console.log('block statements: ', statements);
+        console.log("token after: ", this.tokens[this.coursor]);
+        this.consume(tokensType_1.TOKEN_TYPES.RIGHT_BRACE, 'Expected } after block.');
+        return statements;
+    };
+    Parser.prototype.varStmtDeclaration = function () {
         var token = this.consume(tokensType_1.TOKEN_TYPES.IDENTIFIER, 'Expected variable name');
         var intializer = null;
         if (this.match(tokensType_1.TOKEN_TYPES.EQUAL)) {

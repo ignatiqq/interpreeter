@@ -5,6 +5,7 @@ export type StmtVisitor<T> = {
     visitExpressionStmt: (stmt: ExpressionStmt) => T;
     visitPrintStmt: (stmt: PrintStmt) => T;
     visitVarStmt: (stmt: VarStmt) => T;
+    visitBlockStmt(stmt: BlockStmt): T;
 }
 
 export abstract class Stmt {
@@ -50,5 +51,18 @@ export class VarStmt extends Stmt {
 
     accept<T>(visitor: StmtVisitor<T>): T {
         return visitor.visitVarStmt(this);
+    }
+}
+
+export class BlockStmt extends Stmt {
+    stmts: Stmt[];
+
+    constructor(stmts: Stmt[]) {
+        super();
+        this.stmts = stmts;
+    }
+
+    accept<T>(visitor: StmtVisitor<T>): T {
+        return visitor.visitBlockStmt(this);
     }
 }

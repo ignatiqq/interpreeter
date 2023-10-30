@@ -15,7 +15,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VarStmt = exports.PrintStmt = exports.ExpressionStmt = exports.Stmt = void 0;
+exports.BlockStmt = exports.VarStmt = exports.PrintStmt = exports.ExpressionStmt = exports.Stmt = void 0;
 var Stmt = /** @class */ (function () {
     function Stmt() {
     }
@@ -63,3 +63,16 @@ var VarStmt = /** @class */ (function (_super) {
     return VarStmt;
 }(Stmt));
 exports.VarStmt = VarStmt;
+var BlockStmt = /** @class */ (function (_super) {
+    __extends(BlockStmt, _super);
+    function BlockStmt(stmts) {
+        var _this = _super.call(this) || this;
+        _this.stmts = stmts;
+        return _this;
+    }
+    BlockStmt.prototype.accept = function (visitor) {
+        return visitor.visitBlockStmt(this);
+    };
+    return BlockStmt;
+}(Stmt));
+exports.BlockStmt = BlockStmt;

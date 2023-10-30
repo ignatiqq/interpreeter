@@ -2,7 +2,7 @@ import { Enviroment } from "../../Enviroment";
 import { RuntimeError } from "../../error/error";
 import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr } from "../../expressions/Expressions";
 import Interpreter from "../../Interpreter";
-import { ExpressionStmt, PrintStmt, Stmt, StmtVisitor, VarStmt } from "../../statements/statements";
+import { BlockStmt, ExpressionStmt, PrintStmt, Stmt, StmtVisitor, VarStmt } from "../../statements/statements";
 import { TOKEN_TYPES } from "../../tokens/constants/tokensType";
 import Token from "../../tokens/Token/Token";
 
@@ -184,4 +184,24 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         const expr = this.evaluate(stmt.expression);
         console.log(`${expr}`);
     };
+
+    executeBlock(stmts: Stmt[], enviroment: Enviroment) {
+        const prev = this.enviroment;
+
+        try {
+            // рекурсивно проваливаемся в новый енвайромент
+            this.enviroment = enviroment;
+            for(const stmt of stmts) {
+                this.execute(stmt);
+            }
+        } finally {
+            // распутываем рекурсию
+            this.enviroment = prev;
+        }
+    }
+
+    visitBlockStmt(stmt: BlockStmt) {
+        this.executeBlock(stmt.stmts, new Enviroment(this.enviroment));
+        return null;
+    }
 }
