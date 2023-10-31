@@ -46,7 +46,7 @@ export class Enviroment implements IEnviroment {
         if(this.map.has(token.lexeme)) {
             return this.map.get(token.lexeme);
         }
-        
+
         // @ts-ignore @TODO
         // рекурсивный поиск перменных в областях видимости (евайроментах) выше
         if(!this.isGlobalEnviroment) return this.enclosing.get(token);

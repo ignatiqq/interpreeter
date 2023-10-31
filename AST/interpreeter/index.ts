@@ -152,12 +152,12 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
 
         // var initalizer not null
         if(stmt.initializer !== null) {
+            console.log('stmt.initializer', stmt.initializer);
             const res = this.evaluate(stmt.initializer);
             if(res !== undefined && res !== null) {
                 value = res;
             }
         }
-
 
         // define variable (actually global) at the variables hashmap
         // сетим переменную в enviroment

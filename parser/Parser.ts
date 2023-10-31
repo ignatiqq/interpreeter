@@ -65,7 +65,6 @@ export class Parser {
     }
 
     parenthlessBlock() {
-        console.log("parenthlessBlock preV: ", this.previous());
         return new BlockStmt(this.block());
     }
 
@@ -73,15 +72,11 @@ export class Parser {
         const statements = [];
 
         while(!this.check(TOKEN_TYPES.RIGHT_BRACE) && !this.isAtEnd()) {
-            console.log("token: ", this.tokens[this.coursor]);
             const stmt = this.declaration();
-            console.log("statmenet: ", stmt)
             // @ts-ignore
             statements.push(stmt);
         }
 
-       console.log('block statements: ', statements);
-       console.log("token after: ", this.tokens[this.coursor]);
         this.consume(TOKEN_TYPES.RIGHT_BRACE, 'Expected } after block.');
         return statements;
     }
@@ -257,7 +252,7 @@ export class Parser {
             return new VariableExpr(this.previous());
         }
         if(this.match(TOKEN_TYPES.NUMBER) || this.match(TOKEN_TYPES.STRING)) {
-            return new LiteralExpr(this.previous().lexeme);
+            return new LiteralExpr(Number(this.previous().lexeme));
         }
         if(this.match(TOKEN_TYPES.LEFT_PAREN)) {
             const expr = this.expression();

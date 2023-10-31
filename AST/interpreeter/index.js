@@ -133,11 +133,13 @@ var Interpreeter = /** @class */ (function () {
         var value = null;
         // var initalizer not null
         if (stmt.initializer !== null) {
+            console.log('stmt.initializer', stmt.initializer);
             var res = this.evaluate(stmt.initializer);
             if (res !== undefined && res !== null) {
                 value = res;
             }
         }
+        console.log("visitVarStmt.DEFINE", stmt.token, value, typeof value);
         // define variable (actually global) at the variables hashmap
         // сетим переменную в enviroment
         this.enviroment.define(stmt.token.lexeme, value);
@@ -147,6 +149,7 @@ var Interpreeter = /** @class */ (function () {
     // потомучто нужно вычислить чем является имя, 
     // а значит имя = значение (имя преобразуется в значение, а значение = Expression)
     Interpreeter.prototype.visitVariableExpr = function (expr) {
+        console.log("visitVariableExpr", expr);
         // берем переменную из enviroment по имени
         return this.enviroment.get(expr.token);
     };
@@ -179,6 +182,7 @@ var Interpreeter = /** @class */ (function () {
         }
     };
     Interpreeter.prototype.visitBlockStmt = function (stmt) {
+        console.log("visitBlockStmt", stmt);
         this.executeBlock(stmt.stmts, new Enviroment_1.Enviroment(this.enviroment));
         return null;
     };

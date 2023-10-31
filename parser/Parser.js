@@ -57,20 +57,15 @@ var Parser = /** @class */ (function () {
         }
     };
     Parser.prototype.parenthlessBlock = function () {
-        console.log("parenthlessBlock preV: ", this.previous());
         return new statements_1.BlockStmt(this.block());
     };
     Parser.prototype.block = function () {
         var statements = [];
         while (!this.check(tokensType_1.TOKEN_TYPES.RIGHT_BRACE) && !this.isAtEnd()) {
-            console.log("token: ", this.tokens[this.coursor]);
             var stmt = this.declaration();
-            console.log("statmenet: ", stmt);
             // @ts-ignore
             statements.push(stmt);
         }
-        console.log('block statements: ', statements);
-        console.log("token after: ", this.tokens[this.coursor]);
         this.consume(tokensType_1.TOKEN_TYPES.RIGHT_BRACE, 'Expected } after block.');
         return statements;
     };
@@ -219,7 +214,7 @@ var Parser = /** @class */ (function () {
             return new Expressions_1.VariableExpr(this.previous());
         }
         if (this.match(tokensType_1.TOKEN_TYPES.NUMBER) || this.match(tokensType_1.TOKEN_TYPES.STRING)) {
-            return new Expressions_1.LiteralExpr(this.previous().lexeme);
+            return new Expressions_1.LiteralExpr(Number(this.previous().lexeme));
         }
         if (this.match(tokensType_1.TOKEN_TYPES.LEFT_PAREN)) {
             var expr = this.expression();
