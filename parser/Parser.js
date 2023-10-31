@@ -30,7 +30,6 @@ var Parser = /** @class */ (function () {
     Parser.prototype.parse = function () {
         try {
             var statements = [];
-            console.log('tokens: ', this.tokens);
             while (!this.isAtEnd()) {
                 statements.push(this.declaration());
             }
@@ -134,7 +133,7 @@ var Parser = /** @class */ (function () {
         //                                   |
         //                                   v
         // либо любым Expr Expr -> getObj().x = 
-        var expr = this.equality();
+        var expr = this.logical_or();
         if (this.match(tokensType_1.TOKEN_TYPES.EQUAL)) {
             // equals token to reoport to the error (line)
             var equals = this.previous();
@@ -149,6 +148,24 @@ var Parser = /** @class */ (function () {
                 return new Expressions_1.AssignmentExpr(token, value);
             }
             this.error(equals, "Invalid assignment target.");
+        }
+        return expr;
+    };
+    Parser.prototype.logical_or = function () {
+        var expr = this.logical_and();
+        while (this.match(tokensType_1.TOKEN_TYPES.OR)) {
+            var prev = this.previous();
+            var right = this.logical_and();
+            expr = new Expressions_1.LogicalExpr(expr, prev, right);
+        }
+        return expr;
+    };
+    Parser.prototype.logical_and = function () {
+        var expr = this.equality();
+        while (this.match(tokensType_1.TOKEN_TYPES.AND)) {
+            var prev = this.previous();
+            var right = this.equality();
+            expr = new Expressions_1.LogicalExpr(expr, prev, right);
         }
         return expr;
     };

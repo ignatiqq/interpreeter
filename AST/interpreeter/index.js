@@ -133,7 +133,6 @@ var Interpreeter = /** @class */ (function () {
         var value = null;
         // var initalizer not null
         if (stmt.initializer !== null) {
-            console.log('stmt.initializer', stmt.initializer);
             var res = this.evaluate(stmt.initializer);
             if (res !== undefined && res !== null) {
                 value = res;
@@ -171,7 +170,6 @@ var Interpreeter = /** @class */ (function () {
             this.enviroment = enviroment;
             for (var _i = 0, stmts_2 = stmts; _i < stmts_2.length; _i++) {
                 var stmt = stmts_2[_i];
-                console.log("executeBlock statement to execute: ", stmt);
                 this.execute(stmt);
             }
         }
@@ -186,7 +184,6 @@ var Interpreeter = /** @class */ (function () {
     };
     Interpreeter.prototype.visitIfStmt = function (stmt) {
         var isConditionTruthly = this.evaluate(stmt.condition);
-        console.log('stmt: ', stmt, 'stmt.condition: ', stmt.condition, 'stmt.thenBranch: ', stmt.thenBranch, { isConditionTruthly: isConditionTruthly });
         if (isConditionTruthly) {
             this.execute(stmt.thenBranch);
         }
@@ -194,6 +191,14 @@ var Interpreeter = /** @class */ (function () {
             this.execute(stmt.elseBranch);
         }
         return null;
+    };
+    Interpreeter.prototype.visitLogicalExpr = function (expr) {
+        if (expr.operator.type === tokensType_1.TOKEN_TYPES.OR) {
+            return this.evaluate(expr.left) || this.evaluate(expr.right);
+        }
+        if (expr.operator.type === tokensType_1.TOKEN_TYPES.AND) {
+            return this.evaluate(expr.left) && this.evaluate(expr.right);
+        }
     };
     return Interpreeter;
 }());

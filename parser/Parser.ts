@@ -1,5 +1,5 @@
 import { ParseError } from "../error/error";
-import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr } from "../expressions/Expressions";
+import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr, LogicalExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
 import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt } from "../statements/statements";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
@@ -7,7 +7,6 @@ import Token from "../tokens/Token/Token";
 
 type PrimaryExprReturnType = LiteralExpr | GroupingExpr | VariableExpr;
 type UnaryExprReturnType = UnaryExpr | PrimaryExprReturnType;
-type BinaryExprType = BinaryExpr | UnaryExprReturnType;
 
 /**
  * Парсер преобразует набор токенов в правила языка
@@ -157,8 +156,7 @@ export class Parser {
         //                                   |
         //                                   v
         // либо любым Expr Expr -> getObj().x = 
-        
-        const expr = this.equality();
+        const expr = this.logical_or();
 
         if(this.match(TOKEN_TYPES.EQUAL)) {
             // equals token to reoport to the error (line)
@@ -176,6 +174,30 @@ export class Parser {
             }
 
             this.error(equals, "Invalid assignment target.");
+        }
+        
+        return expr;
+    }
+
+    logical_or() {
+        let expr = this.logical_and();
+
+        while(this.match(TOKEN_TYPES.OR)) {
+            const prev = this.previous();
+            const right = this.logical_and();
+            expr = new LogicalExpr(expr, prev, right);
+        }
+
+        return expr;
+    }
+
+    logical_and() {
+        let expr = this.equality();
+
+        while(this.match(TOKEN_TYPES.AND)) {
+            const prev = this.previous();
+            const right = this.equality();
+            expr = new LogicalExpr(expr, prev, right);
         }
         
         return expr;

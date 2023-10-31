@@ -1,6 +1,6 @@
 import { Enviroment } from "../../Enviroment";
 import { RuntimeError } from "../../error/error";
-import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr } from "../../expressions/Expressions";
+import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr, LogicalExpr } from "../../expressions/Expressions";
 import Interpreter from "../../Interpreter";
 import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, StmtVisitor, VarStmt } from "../../statements/statements";
 import { TOKEN_TYPES } from "../../tokens/constants/tokensType";
@@ -205,7 +205,9 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     }
 
     visitIfStmt(stmt: IfStmt) {
-        const isConditionTruthly = this.evaluate(stmt.condition);
+        // check on truethly
+        // because we want to let it run "if(123)" or "if('hello')"
+        const isConditionTruthly = this.isTruthy(this.evaluate(stmt.condition));
 
         if(isConditionTruthly) {
             this.execute(stmt.thenBranch);
@@ -214,5 +216,16 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         }
 
         return null;
+    }
+
+    visitLogicalExpr(expr: LogicalExpr) {
+        
+        if(expr.operator.type === TOKEN_TYPES.OR) {
+            return this.evaluate(expr.left) || this.evaluate(expr.right);
+        }
+
+        if(expr.operator.type === TOKEN_TYPES.AND) {
+            return this.evaluate(expr.left) && this.evaluate(expr.right);
+        }
     }
 }

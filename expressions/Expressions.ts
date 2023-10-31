@@ -14,6 +14,7 @@ export interface ExprVisitor<T> {
     visitUnaryExpr: (expr: UnaryExpr) => T;
     visitVariableExpr: (expr: VariableExpr) => T;
     visitAssignmentExpr(expr: AssignmentExpr): T;
+    visitLogicalExpr(expr: LogicalExpr): T;
     // visitIdentifierExpr: (expr: IdentifierExpr) => T;
     
     // just binary 
@@ -128,5 +129,22 @@ export class AssignmentExpr extends Expr {
 
     accept<T>(visitor: ExprVisitor<T>): T {
         return visitor.visitAssignmentExpr(this);    
+    }
+}
+
+export class LogicalExpr extends Expr {
+    left: Expr;
+    operator: Token;
+    right: Expr;
+
+    constructor(left: Expr, operator: Token, right: Expr) {
+        super();
+        this.left = left;
+        this.operator = operator;
+        this.right = right;
+    }
+    
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitLogicalExpr(this);
     }
 }
