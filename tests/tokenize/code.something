@@ -1,5 +1,7 @@
 var a = 1;
-{
-  var a = a + 2;
-  print a;
+
+if (false) {
+  print 'in condition';
 }
+
+print 'out of condition';

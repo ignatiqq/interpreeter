@@ -9,7 +9,6 @@ var Enviroment = /** @class */ (function () {
         this.enclosing = enclosing;
     }
     Enviroment.prototype.define = function (name, val) {
-        console.log(name, val, typeof val);
         this.map.set(name, val);
     };
     Enviroment.prototype.assign = function (token, val) {
@@ -25,12 +24,9 @@ var Enviroment = /** @class */ (function () {
         this.map.delete(name);
     };
     Enviroment.prototype.get = function (token) {
-        var _a;
-        console.log({ token: token, encl: this.enclosing });
         if (this.map.has(token.lexeme)) {
             return this.map.get(token.lexeme);
         }
-        console.log("AFTER HAS", { token: token, encl: this.enclosing, type: typeof ((_a = this.enclosing) === null || _a === void 0 ? void 0 : _a.get(token)) });
         // @ts-ignore @TODO
         // рекурсивный поиск перменных в областях видимости (евайроментах) выше
         if (!this.isGlobalEnviroment)

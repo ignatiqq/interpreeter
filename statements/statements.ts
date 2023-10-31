@@ -2,10 +2,11 @@ import { Expr } from "../expressions/Expressions";
 import Token from "../tokens/Token/Token";
 
 export type StmtVisitor<T> = {
-    visitExpressionStmt: (stmt: ExpressionStmt) => T;
-    visitPrintStmt: (stmt: PrintStmt) => T;
-    visitVarStmt: (stmt: VarStmt) => T;
+    visitExpressionStmt(stmt: ExpressionStmt): T;
+    visitPrintStmt(stmt: PrintStmt): T;
+    visitVarStmt(stmt: VarStmt): T;
     visitBlockStmt(stmt: BlockStmt): T;
+    visitIfStmt(stmt: IfStmt): T
 }
 
 export abstract class Stmt {
@@ -64,5 +65,22 @@ export class BlockStmt extends Stmt {
 
     accept<T>(visitor: StmtVisitor<T>): T {
         return visitor.visitBlockStmt(this);
+    }
+}
+
+export class IfStmt extends Stmt {
+    condition: Expr;
+    thenBranch: Stmt;
+    elseBranch: Stmt | null;
+
+    constructor(condition: Expr, thenBranch: Stmt, elseBranch: Stmt | null = null) {
+        super();
+        this.condition = condition;
+        this.thenBranch = thenBranch;
+        this.elseBranch = elseBranch;
+    }
+
+    accept<T>(visitor: StmtVisitor<T>): T {
+        return visitor.visitIfStmt(this);
     }
 }

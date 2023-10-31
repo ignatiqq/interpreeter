@@ -1,7 +1,7 @@
 import { ParseError } from "../error/error";
 import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
-import { BlockStmt, ExpressionStmt, PrintStmt, Stmt, VarStmt } from "../statements/statements";
+import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt } from "../statements/statements";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
 import Token from "../tokens/Token/Token";
 
@@ -55,8 +55,6 @@ export class Parser {
     // или стригерит ошибку которая развернет стек и пуш в стейтментс не выполнится
     declaration(): Stmt {
         try {
-            if(this.match(TOKEN_TYPES.VAR)) return this.varStmtDeclaration();
-            if(this.match(TOKEN_TYPES.LEFT_BRACE)) return this.parenthlessBlock();
             return this.statement();
         } catch (error) {
             this.synchronize();
@@ -96,10 +94,29 @@ export class Parser {
     }
 
     statement(): Stmt {
-        if(this.match(TOKEN_TYPES.PRINT)) {
-            return this.printStatement();
-        }
+        if(this.match(TOKEN_TYPES.PRINT)) return this.printStatement();
+        if(this.match(TOKEN_TYPES.VAR)) return this.varStmtDeclaration();
+        if(this.match(TOKEN_TYPES.LEFT_BRACE)) return this.parenthlessBlock();
+        if(this.match(TOKEN_TYPES.IF)) return this.ifStatement();
         return this.expressionStatement();
+    }
+
+    ifStatement(): Stmt {
+        this.consume(TOKEN_TYPES.LEFT_PAREN, 'Expected ( before if statement');
+
+        const expr = this.expression();
+
+        this.consume(TOKEN_TYPES.RIGHT_PAREN, 'Expected ) after if statement');
+
+        const thenBranch = this.statement();
+        // let and null assign because "else" is conditionally statement
+        let elseBranch: Stmt | null = null;
+
+        if(this.match(TOKEN_TYPES.ELSE)) {
+            elseBranch = this.statement();
+        }
+
+        return new IfStmt(expr, thenBranch, elseBranch)
     }
 
     /**
@@ -248,12 +265,9 @@ export class Parser {
         if(this.match(TOKEN_TYPES.FALSE)) return new LiteralExpr(false);
         if(this.match(TOKEN_TYPES.TRUE)) return new LiteralExpr(true);
         if(this.match(TOKEN_TYPES.NULL)) return new LiteralExpr(null);
-        if(this.match(TOKEN_TYPES.IDENTIFIER)) {
-            return new VariableExpr(this.previous());
-        }
-        if(this.match(TOKEN_TYPES.NUMBER) || this.match(TOKEN_TYPES.STRING)) {
-            return new LiteralExpr(Number(this.previous().lexeme));
-        }
+        if(this.match(TOKEN_TYPES.IDENTIFIER)) return new VariableExpr(this.previous());
+        if(this.match(TOKEN_TYPES.NUMBER)) return new LiteralExpr(Number(this.previous().lexeme));
+        if(this.match(TOKEN_TYPES.STRING)) return new LiteralExpr(this.previous().lexeme);
         if(this.match(TOKEN_TYPES.LEFT_PAREN)) {
             const expr = this.expression();
             this.consume(TOKEN_TYPES.RIGHT_PAREN, 'Expected ")" after grouping expression');

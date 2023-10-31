@@ -2,7 +2,7 @@ import { Enviroment } from "../../Enviroment";
 import { RuntimeError } from "../../error/error";
 import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr } from "../../expressions/Expressions";
 import Interpreter from "../../Interpreter";
-import { BlockStmt, ExpressionStmt, PrintStmt, Stmt, StmtVisitor, VarStmt } from "../../statements/statements";
+import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, StmtVisitor, VarStmt } from "../../statements/statements";
 import { TOKEN_TYPES } from "../../tokens/constants/tokensType";
 import Token from "../../tokens/Token/Token";
 
@@ -152,7 +152,6 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
 
         // var initalizer not null
         if(stmt.initializer !== null) {
-            console.log('stmt.initializer', stmt.initializer);
             const res = this.evaluate(stmt.initializer);
             if(res !== undefined && res !== null) {
                 value = res;
@@ -202,6 +201,18 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
 
     visitBlockStmt(stmt: BlockStmt) {
         this.executeBlock(stmt.stmts, new Enviroment(this.enviroment));
+        return null;
+    }
+
+    visitIfStmt(stmt: IfStmt) {
+        const isConditionTruthly = this.evaluate(stmt.condition);
+
+        if(isConditionTruthly) {
+            this.execute(stmt.thenBranch);
+        } else if(stmt.elseBranch !== null) {
+            this.execute(stmt.elseBranch);
+        }
+
         return null;
     }
 }

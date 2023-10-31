@@ -30,6 +30,7 @@ var Parser = /** @class */ (function () {
     Parser.prototype.parse = function () {
         try {
             var statements = [];
+            console.log('tokens: ', this.tokens);
             while (!this.isAtEnd()) {
                 statements.push(this.declaration());
             }
@@ -45,10 +46,6 @@ var Parser = /** @class */ (function () {
     // или стригерит ошибку которая развернет стек и пуш в стейтментс не выполнится
     Parser.prototype.declaration = function () {
         try {
-            if (this.match(tokensType_1.TOKEN_TYPES.VAR))
-                return this.varStmtDeclaration();
-            if (this.match(tokensType_1.TOKEN_TYPES.LEFT_BRACE))
-                return this.parenthlessBlock();
             return this.statement();
         }
         catch (error) {
@@ -80,10 +77,27 @@ var Parser = /** @class */ (function () {
         return new statements_1.VarStmt(token, intializer);
     };
     Parser.prototype.statement = function () {
-        if (this.match(tokensType_1.TOKEN_TYPES.PRINT)) {
+        if (this.match(tokensType_1.TOKEN_TYPES.PRINT))
             return this.printStatement();
-        }
+        if (this.match(tokensType_1.TOKEN_TYPES.VAR))
+            return this.varStmtDeclaration();
+        if (this.match(tokensType_1.TOKEN_TYPES.LEFT_BRACE))
+            return this.parenthlessBlock();
+        if (this.match(tokensType_1.TOKEN_TYPES.IF))
+            return this.ifStatement();
         return this.expressionStatement();
+    };
+    Parser.prototype.ifStatement = function () {
+        this.consume(tokensType_1.TOKEN_TYPES.LEFT_PAREN, 'Expected ( before if statement');
+        var expr = this.expression();
+        this.consume(tokensType_1.TOKEN_TYPES.RIGHT_PAREN, 'Expected ) after if statement');
+        var thenBranch = this.statement();
+        // let and null assign because "else" is conditionally statement
+        var elseBranch = null;
+        if (this.match(tokensType_1.TOKEN_TYPES.ELSE)) {
+            elseBranch = this.statement();
+        }
+        return new statements_1.IfStmt(expr, thenBranch, elseBranch);
     };
     /**
      * мы берем expression значения токенов, потомучто
@@ -210,12 +224,12 @@ var Parser = /** @class */ (function () {
             return new Expressions_1.LiteralExpr(true);
         if (this.match(tokensType_1.TOKEN_TYPES.NULL))
             return new Expressions_1.LiteralExpr(null);
-        if (this.match(tokensType_1.TOKEN_TYPES.IDENTIFIER)) {
+        if (this.match(tokensType_1.TOKEN_TYPES.IDENTIFIER))
             return new Expressions_1.VariableExpr(this.previous());
-        }
-        if (this.match(tokensType_1.TOKEN_TYPES.NUMBER) || this.match(tokensType_1.TOKEN_TYPES.STRING)) {
+        if (this.match(tokensType_1.TOKEN_TYPES.NUMBER))
             return new Expressions_1.LiteralExpr(Number(this.previous().lexeme));
-        }
+        if (this.match(tokensType_1.TOKEN_TYPES.STRING))
+            return new Expressions_1.LiteralExpr(this.previous().lexeme);
         if (this.match(tokensType_1.TOKEN_TYPES.LEFT_PAREN)) {
             var expr = this.expression();
             this.consume(tokensType_1.TOKEN_TYPES.RIGHT_PAREN, 'Expected ")" after grouping expression');

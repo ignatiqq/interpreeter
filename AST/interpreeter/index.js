@@ -139,7 +139,6 @@ var Interpreeter = /** @class */ (function () {
                 value = res;
             }
         }
-        console.log("visitVarStmt.DEFINE", stmt.token, value, typeof value);
         // define variable (actually global) at the variables hashmap
         // сетим переменную в enviroment
         this.enviroment.define(stmt.token.lexeme, value);
@@ -149,7 +148,6 @@ var Interpreeter = /** @class */ (function () {
     // потомучто нужно вычислить чем является имя, 
     // а значит имя = значение (имя преобразуется в значение, а значение = Expression)
     Interpreeter.prototype.visitVariableExpr = function (expr) {
-        console.log("visitVariableExpr", expr);
         // берем переменную из enviroment по имени
         return this.enviroment.get(expr.token);
     };
@@ -173,6 +171,7 @@ var Interpreeter = /** @class */ (function () {
             this.enviroment = enviroment;
             for (var _i = 0, stmts_2 = stmts; _i < stmts_2.length; _i++) {
                 var stmt = stmts_2[_i];
+                console.log("executeBlock statement to execute: ", stmt);
                 this.execute(stmt);
             }
         }
@@ -182,8 +181,18 @@ var Interpreeter = /** @class */ (function () {
         }
     };
     Interpreeter.prototype.visitBlockStmt = function (stmt) {
-        console.log("visitBlockStmt", stmt);
         this.executeBlock(stmt.stmts, new Enviroment_1.Enviroment(this.enviroment));
+        return null;
+    };
+    Interpreeter.prototype.visitIfStmt = function (stmt) {
+        var isConditionTruthly = this.evaluate(stmt.condition);
+        console.log('stmt: ', stmt, 'stmt.condition: ', stmt.condition, 'stmt.thenBranch: ', stmt.thenBranch, { isConditionTruthly: isConditionTruthly });
+        if (isConditionTruthly) {
+            this.execute(stmt.thenBranch);
+        }
+        else if (stmt.elseBranch !== null) {
+            this.execute(stmt.elseBranch);
+        }
         return null;
     };
     return Interpreeter;
