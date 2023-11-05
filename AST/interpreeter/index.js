@@ -4,6 +4,8 @@ exports.Interpreeter = void 0;
 var Enviroment_1 = require("../../Enviroment");
 var error_1 = require("../../error/error");
 var Interpreter_1 = require("../../Interpreter");
+var loxCallable_1 = require("../../loxCallable");
+var nativeFunctions_1 = require("../../nativeFunctions");
 var tokensType_1 = require("../../tokens/constants/tokensType");
 /**
  * Interptreete -класс интерпритатора реализовывающий все методы посетителя
@@ -15,7 +17,9 @@ var tokensType_1 = require("../../tokens/constants/tokensType");
  */
 var Interpreeter = /** @class */ (function () {
     function Interpreeter(enviroment) {
-        this.enviroment = enviroment;
+        this.globals = enviroment;
+        this.enviroment = this.globals;
+        this.globals.define('clock', new nativeFunctions_1.Clock());
     }
     Interpreeter.prototype.interprete = function (stmts) {
         try {
@@ -31,6 +35,7 @@ var Interpreeter = /** @class */ (function () {
     Interpreeter.prototype.execute = function (stmt) {
         return stmt.accept(this);
     };
+    // @ts-ignore it will anyway reset code interpreeting
     Interpreeter.prototype.evaluate = function (expr) {
         try {
             return expr.accept(this);
@@ -87,7 +92,10 @@ var Interpreeter = /** @class */ (function () {
                     typeof left === 'number' && typeof right === 'string') {
                     return String(left) + String(right);
                 }
-                else if (typeof left === 'number' && typeof right === 'number') {
+                if (typeof left === 'string' && typeof right === 'string') {
+                    return left + right;
+                }
+                if (typeof left === 'number' && typeof right === 'number') {
                     return left + right;
                 }
                 throw new error_1.RuntimeError(expr.operator, "Operands of '+' operator must be numbers or strings.");
@@ -116,7 +124,8 @@ var Interpreeter = /** @class */ (function () {
     ;
     Interpreeter.prototype.visitAssignmentExpr = function (expr) {
         var val = expr.expr !== null ? this.evaluate(expr.expr) : null;
-        this.enviroment.assign(expr.token, val || null);
+        // @ts-ignore
+        this.enviroment.assign(expr.token, val);
         return val;
     };
     Interpreeter.prototype.isEqual = function (val, val2) {
@@ -141,6 +150,7 @@ var Interpreeter = /** @class */ (function () {
         // define variable (actually global) at the variables hashmap
         // сетим переменную в enviroment
         this.enviroment.define(stmt.token.lexeme, value);
+        return this.enviroment.get(stmt.token);
     };
     ;
     // имя переменной это expression
@@ -152,7 +162,7 @@ var Interpreeter = /** @class */ (function () {
     };
     // stmt visitors
     Interpreeter.prototype.visitExpressionStmt = function (stmt) {
-        this.evaluate(stmt.expression);
+        return this.evaluate(stmt.expression);
     };
     ;
     Interpreeter.prototype.visitPrintStmt = function (stmt) {
@@ -183,7 +193,9 @@ var Interpreeter = /** @class */ (function () {
         return null;
     };
     Interpreeter.prototype.visitIfStmt = function (stmt) {
-        var isConditionTruthly = this.evaluate(stmt.condition);
+        // check on truethly
+        // because we want to let it run "if(123)" or "if('hello')"
+        var isConditionTruthly = this.isTruthy(this.evaluate(stmt.condition));
         if (isConditionTruthly) {
             this.execute(stmt.thenBranch);
         }
@@ -199,6 +211,35 @@ var Interpreeter = /** @class */ (function () {
         if (expr.operator.type === tokensType_1.TOKEN_TYPES.AND) {
             return this.evaluate(expr.left) && this.evaluate(expr.right);
         }
+    };
+    Interpreeter.prototype.visitWhileStmt = function (stmt) {
+        while (this.isTruthy(this.evaluate(stmt.condition))) {
+            this.execute(stmt.body);
+        }
+        return null;
+    };
+    Interpreeter.prototype.visitFunctionStmt = function (stmt) {
+        // this.enviroment.define(stmt.identifier.lexeme, stmt.)
+        var fn = new loxCallable_1.LoxFunction(stmt);
+        // define function indentifier in enviroment
+        this.enviroment.define(stmt.identifier.lexeme, fn);
+        return null;
+    };
+    Interpreeter.prototype.visitCallExpr = function (expr) {
+        // actually identifier
+        var callee = this.evaluate(expr.callee);
+        var evaluatedArgs = [];
+        for (var _i = 0, _a = expr.args; _i < _a.length; _i++) {
+            var arg = _a[_i];
+            evaluatedArgs.push(this.evaluate(arg));
+        }
+        if (!(callee instanceof loxCallable_1.LoxFunction)) {
+            throw new error_1.RuntimeError(expr.paren, 'Can only call functions and classes.');
+        }
+        if (evaluatedArgs.length !== callee.arity()) {
+            throw new error_1.RuntimeError(expr.paren, 'Expected ' + callee.arity() + ' arguments but got ' + arguments.length);
+        }
+        return callee.call(this, evaluatedArgs);
     };
     return Interpreeter;
 }());

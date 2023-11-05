@@ -1,7 +1,7 @@
 import { ParseError } from "../error/error";
-import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr, LogicalExpr } from "../expressions/Expressions";
+import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
-import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, VarStmt } from "../statements/statements";
+import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, Stmt, VarStmt, WhileStmt } from "../statements/statements";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
 import Token from "../tokens/Token/Token";
 
@@ -45,7 +45,6 @@ export class Parser {
 
             return statements;
         } catch (error) {
-            console.error(error);
             return;
         }
     }
@@ -66,11 +65,10 @@ export class Parser {
     }
 
     block(): Stmt[] {
-        const statements = [];
+        const statements: Stmt[] = [];
 
         while(!this.check(TOKEN_TYPES.RIGHT_BRACE) && !this.isAtEnd()) {
             const stmt = this.declaration();
-            // @ts-ignore
             statements.push(stmt);
         }
 
@@ -97,7 +95,98 @@ export class Parser {
         if(this.match(TOKEN_TYPES.VAR)) return this.varStmtDeclaration();
         if(this.match(TOKEN_TYPES.LEFT_BRACE)) return this.parenthlessBlock();
         if(this.match(TOKEN_TYPES.IF)) return this.ifStatement();
+        if(this.match(TOKEN_TYPES.WHILE)) return this.whileStatement();
+        if(this.match(TOKEN_TYPES.FOR)) return this.forStatement();
+        if(this.match(TOKEN_TYPES.FUNCTION)) return this.funcDeclaration('function');
         return this.expressionStatement();
+    }
+
+    funcDeclaration(kind: string) {
+        return this.function(kind);
+    }
+
+    function(kind: string) {
+        const name = this.consume(TOKEN_TYPES.IDENTIFIER, 'Expected ' + kind + ' name');
+
+        this.consume(TOKEN_TYPES.LEFT_PAREN, 'Expected "(" after ' + kind + ' name');
+
+        const params: Token[] = [];
+
+        // function may be with empty params
+        if(!this.check(TOKEN_TYPES.RIGHT_PAREN)) {
+            // перебор всех параметров функции
+            do {
+                if(params.length > 254) {
+                    this.error(this.peek(), "Can't have more than 255 parameters.");
+                }
+
+                params.push(this.consume(TOKEN_TYPES.IDENTIFIER, "Expected parameter name"));
+            } while(this.match(TOKEN_TYPES.COMMA))
+        }
+
+        this.consume(TOKEN_TYPES.RIGHT_PAREN, "Expected ')' after parameters");
+
+        this.consume(TOKEN_TYPES.LEFT_BRACE, 'Expected "{" before ' + kind + ' body');
+
+        const stmts = this.block();
+
+        return new FunctionStmt(name, params, stmts);
+    }
+    
+    /**
+     * Синтаксический сахар над while
+     * @returns
+     */
+    forStatement() {
+        this.consume(TOKEN_TYPES.LEFT_PAREN, 'Expected ( before for statement');
+
+        // форм инициализатора (начального значения) может быть много поэтому у нас есть все эти условия
+        let initializer: Stmt | null;
+        // without initializer
+        if(this.match(TOKEN_TYPES.SEMICOLON)) {
+            initializer = null
+        } else if (this.match(TOKEN_TYPES.VAR)) {
+            initializer = this.varStmtDeclaration();
+        } else {
+            initializer = this.expressionStatement();
+        }
+
+        let condition: Expr | null = null;
+        if(!this.check(TOKEN_TYPES.SEMICOLON)) {
+            condition = this.expression();
+        }
+        this.consume(TOKEN_TYPES.SEMICOLON, "Expected ';' after loop condition.");
+
+
+        let increment: Expr | null = null;
+        if(!this.check(TOKEN_TYPES.RIGHT_PAREN)) {
+            increment = this.expression();
+        }
+        this.consume(TOKEN_TYPES.RIGHT_PAREN, "Expected ')' after for clauses.");
+
+        let body = this.statement();
+        
+        // ВСЕ ВЫРАЖЕНИЯ ЦИКЛА "condition", "initializer", "increment"
+        // заключены в BlockExpr, потомучто будут видны только в целе функций
+        // loop = блочная область видимости
+
+        // начинаем обессахаривать "while" for циклом с конца
+        if(increment !== null) {
+            // с каждым выполнение body, должен выполняться экспрш цикла
+            // поэтому у нас вместо 1 стейтмента (боди) 2
+            body = new BlockStmt([body, new ExpressionStmt(increment)]);
+        }
+
+        // если кондишна нет, он всегда тру, ждем брейка
+        if(condition === null) condition = new LiteralExpr(true);
+        body = new WhileStmt(condition, body);
+
+        // если есть initializer он выполняется тоже один раз
+        if(initializer !== null) {
+            body = new BlockStmt([initializer, body]);
+        }
+
+        return body;
     }
 
     ifStatement(): Stmt {
@@ -116,6 +205,14 @@ export class Parser {
         }
 
         return new IfStmt(expr, thenBranch, elseBranch)
+    }
+
+    whileStatement() {
+        this.consume(TOKEN_TYPES.LEFT_PAREN, 'Expected ( opens while');
+        const expr = this.expression();
+        this.consume(TOKEN_TYPES.RIGHT_PAREN, 'Expected ) after while');
+        const blockStmt = this.statement();
+        return new WhileStmt(expr, blockStmt);
     }
 
     /**
@@ -275,7 +372,48 @@ export class Parser {
             return new UnaryExpr(operator, unary)
         }
 
-        return this.primary();
+        return this.call();
+    }
+
+    call(): Expr {
+        // actually identifier if (reall call expr)
+        let expr = this.primary();
+
+        while(true) {
+            if(this.match(TOKEN_TYPES.LEFT_PAREN)) {
+                // если это вызов функции
+                // передаем callee (Identifier) в вспомогательную функцию
+                expr = this.finishCall(expr);
+                continue;
+            }
+            break;
+        }
+
+        return expr;
+    }
+
+    finishCall(callee: Expr) {
+        const args: Expr[] = [];
+
+        // пока не дошли до конца вызова функции
+        if(!this.check(TOKEN_TYPES.RIGHT_PAREN)) {
+
+            do {
+                if(args.length > 254) {
+                    this.error(this.peek(), "Can't have more than 255 arguments");
+                }
+
+                // expression после точки будет съеденно (передвинут курсор), поэтому мы бесконечно смотрим на запятые
+                // и анализируем expressions
+                args.push(this.expression());
+                // съедаем запятую
+            } while(this.match(TOKEN_TYPES.COMMA))
+        }
+        
+        const paren = this.consume(TOKEN_TYPES.RIGHT_PAREN, "Expected ')' after function call");
+
+        // callee => VariableExpr
+        return new CallExpr(callee, paren, args);
     }
 
     /**

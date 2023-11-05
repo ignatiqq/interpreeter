@@ -301,7 +301,11 @@ var Scanner = /** @class */ (function () {
     };
     Scanner.prototype.addToken = function (type, literal) {
         if (literal === void 0) { literal = null; }
-        var lexeme = type === tokensType_1.TOKEN_TYPES.EOF ? '' : this.sourceCode.slice(this.start, this.coursor);
+        var lexeme = type === tokensType_1.TOKEN_TYPES.EOF
+            ? '' : type === tokensType_1.TOKEN_TYPES.STRING
+            // @TODO пофиксить костыль нормальным способом
+            ? this.sourceCode.slice(this.start + 1, this.coursor - 1)
+            : this.sourceCode.slice(this.start, this.coursor);
         var token = new Token_1.default({ type: type, lexeme: lexeme, literal: literal, line: this.line });
         this.tokens.push(token);
     };

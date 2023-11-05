@@ -1,7 +1,8 @@
 import { RuntimeError } from "../error/error";
+import { LoxCallable } from "../loxCallable";
 import Token from "../tokens/Token/Token";
 
-export type VariableValueType = string | number | boolean | null;
+export type VariableValueType = string | number | boolean | LoxCallable | object | null;
 
 export interface IEnviroment {
     define(name: string, value: VariableValueType): void;

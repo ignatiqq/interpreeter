@@ -6,7 +6,9 @@ export type StmtVisitor<T> = {
     visitPrintStmt(stmt: PrintStmt): T;
     visitVarStmt(stmt: VarStmt): T;
     visitBlockStmt(stmt: BlockStmt): T;
-    visitIfStmt(stmt: IfStmt): T
+    visitIfStmt(stmt: IfStmt): T;
+    visitWhileStmt(stmt: WhileStmt): T;
+    visitFunctionStmt(stmt: FunctionStmt): T;
 }
 
 export abstract class Stmt {
@@ -55,6 +57,23 @@ export class VarStmt extends Stmt {
     }
 }
 
+export class FunctionStmt extends Stmt {
+    identifier: Token;
+    args: Token[];
+    body: Stmt[];
+
+    constructor(identifier: Token, args: Token[], body: Stmt[]) {
+        super();
+        this.identifier = identifier;
+        this.args = args;
+        this.body = body;
+    }
+
+    accept<T>(visitor: StmtVisitor<T>): T {
+        return visitor.visitFunctionStmt(this);
+    }
+}
+
 export class BlockStmt extends Stmt {
     stmts: Stmt[];
 
@@ -82,5 +101,20 @@ export class IfStmt extends Stmt {
 
     accept<T>(visitor: StmtVisitor<T>): T {
         return visitor.visitIfStmt(this);
+    }
+}
+
+export class WhileStmt extends Stmt {
+    condition: Expr;
+    body: Stmt;
+
+    constructor(condition: Expr, body: Stmt) {
+        super();
+        this.condition = condition;
+        this.body = body;
+    }
+
+    accept<T>(visitor: StmtVisitor<T>): T {
+        return visitor.visitWhileStmt(this);
     }
 }

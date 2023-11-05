@@ -1,4 +1,3 @@
-import { VariableValueType } from "../Enviroment";
 import Token from "../tokens/Token/Token";
 
 /** 
@@ -15,6 +14,7 @@ export interface ExprVisitor<T> {
     visitVariableExpr: (expr: VariableExpr) => T;
     visitAssignmentExpr(expr: AssignmentExpr): T;
     visitLogicalExpr(expr: LogicalExpr): T;
+    visitCallExpr(expr: CallExpr): T;
     // visitIdentifierExpr: (expr: IdentifierExpr) => T;
     
     // just binary 
@@ -146,5 +146,22 @@ export class LogicalExpr extends Expr {
     
     accept<T>(visitor: ExprVisitor<T>): T {
         return visitor.visitLogicalExpr(this);
+    }
+}
+
+export class CallExpr extends Expr {
+    callee: Expr;
+    paren: Token;
+    args: Expr[];
+
+    constructor(callee: Expr, paren: Token, args: Expr[]) {
+        super();
+        this.callee = callee;
+        this.paren = paren;
+        this.args = args;
+    }
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitCallExpr(this);    
     }
 }

@@ -15,7 +15,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LogicalExpr = exports.AssignmentExpr = exports.VariableExpr = exports.UnaryExpr = exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.Expr = void 0;
+exports.CallExpr = exports.LogicalExpr = exports.AssignmentExpr = exports.VariableExpr = exports.UnaryExpr = exports.LiteralExpr = exports.GroupingExpr = exports.BinaryExpr = exports.Expr = void 0;
 /**
  * Expression abstract class for our syntax tree
  * Classes which will be inherited must define
@@ -135,3 +135,18 @@ var LogicalExpr = /** @class */ (function (_super) {
     return LogicalExpr;
 }(Expr));
 exports.LogicalExpr = LogicalExpr;
+var CallExpr = /** @class */ (function (_super) {
+    __extends(CallExpr, _super);
+    function CallExpr(callee, paren, args) {
+        var _this = _super.call(this) || this;
+        _this.callee = callee;
+        _this.paren = paren;
+        _this.args = args;
+        return _this;
+    }
+    CallExpr.prototype.accept = function (visitor) {
+        return visitor.visitCallExpr(this);
+    };
+    return CallExpr;
+}(Expr));
+exports.CallExpr = CallExpr;

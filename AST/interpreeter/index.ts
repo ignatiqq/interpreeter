@@ -1,8 +1,10 @@
-import { Enviroment } from "../../Enviroment";
+import { Enviroment, VariableValueType } from "../../Enviroment";
 import { RuntimeError } from "../../error/error";
-import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr, LogicalExpr } from "../../expressions/Expressions";
+import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr } from "../../expressions/Expressions";
 import Interpreter from "../../Interpreter";
-import { BlockStmt, ExpressionStmt, IfStmt, PrintStmt, Stmt, StmtVisitor, VarStmt } from "../../statements/statements";
+import { LoxCallable, LoxFunction } from "../../loxCallable";
+import { Clock } from "../../nativeFunctions";
+import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "../../statements/statements";
 import { TOKEN_TYPES } from "../../tokens/constants/tokensType";
 import Token from "../../tokens/Token/Token";
 
@@ -18,9 +20,14 @@ type LiteralReturnType = string | number | boolean | null;
  */
 export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     enviroment: Enviroment;
-    
+    // globals enviroment used for provide language base functions
+    globals: Enviroment;
+
     constructor(enviroment: Enviroment) {
-        this.enviroment = enviroment;
+        this.globals = enviroment;
+        this.enviroment = this.globals;
+
+        this.globals.define('clock', new Clock());
     }
 
     interprete(stmts: Stmt[]) {
@@ -37,7 +44,8 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         return stmt.accept<void>(this);
     }
 
-    evaluate(expr: Expr): LiteralReturnType | undefined | void {
+    // @ts-ignore it will anyway reset code interpreeting
+    evaluate(expr: Expr): VariableValueType {
         try {
             return expr.accept(this);
         } catch (error) {
@@ -97,7 +105,13 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
                     typeof left === 'number' && typeof right === 'string'
                 ) {
                     return String(left) + String(right);
-                } else if(typeof left === 'number' && typeof right === 'number') {
+                }
+
+                if(typeof left === 'string' && typeof right === 'string') {
+                    return left + right;
+                }
+                
+                if(typeof left === 'number' && typeof right === 'number') {
                     return left + right;
                 }
                 throw new RuntimeError(expr.operator,
@@ -132,7 +146,8 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     visitAssignmentExpr(expr: AssignmentExpr) {
         const val = expr.expr !== null ? this.evaluate(expr.expr) : null;
 
-        this.enviroment.assign(expr.token, val || null);
+        // @ts-ignore
+        this.enviroment.assign(expr.token, val);
 
         return val;
     }
@@ -161,6 +176,7 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         // define variable (actually global) at the variables hashmap
         // сетим переменную в enviroment
         this.enviroment.define(stmt.token.lexeme, value);
+        return this.enviroment.get(stmt.token);
     };
 
     // имя переменной это expression
@@ -173,7 +189,7 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
 
     // stmt visitors
     visitExpressionStmt(stmt: ExpressionStmt) {
-        this.evaluate(stmt.expression);
+        return this.evaluate(stmt.expression);
     };
 
     visitPrintStmt(stmt: PrintStmt) {
@@ -219,7 +235,6 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     }
 
     visitLogicalExpr(expr: LogicalExpr) {
-        
         if(expr.operator.type === TOKEN_TYPES.OR) {
             return this.evaluate(expr.left) || this.evaluate(expr.right);
         }
@@ -227,5 +242,41 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         if(expr.operator.type === TOKEN_TYPES.AND) {
             return this.evaluate(expr.left) && this.evaluate(expr.right);
         }
+    }
+
+    visitWhileStmt(stmt: WhileStmt) {
+        while(this.isTruthy(this.evaluate(stmt.condition))) {
+            this.execute(stmt.body);
+        }
+        return null;
+    }
+
+    visitFunctionStmt(stmt: FunctionStmt): null {
+        // this.enviroment.define(stmt.identifier.lexeme, stmt.)
+        const fn = new LoxFunction(stmt);
+        // define function indentifier in enviroment
+        this.enviroment.define(stmt.identifier.lexeme, fn);
+        return null;
+    }
+
+    visitCallExpr(expr: CallExpr) {
+        // actually identifier
+        const callee = this.evaluate(expr.callee);
+
+        const evaluatedArgs: VariableValueType[] = [];
+
+        for(const arg of expr.args) {
+            evaluatedArgs.push(this.evaluate(arg));
+        }
+
+        if(!(callee instanceof LoxFunction)) {
+            throw new RuntimeError(expr.paren, 'Can only call functions and classes.');
+        }
+
+        if(evaluatedArgs.length !== callee.arity()) {
+            throw new RuntimeError(expr.paren, 'Expected ' + callee.arity() + ' arguments but got ' + arguments.length);
+        }
+
+        return callee.call(this, evaluatedArgs);
     }
 }

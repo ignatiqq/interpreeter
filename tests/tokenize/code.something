@@ -1,2 +1,5 @@
-print "hi" or 2; // "hi".
-print false or null or "finally :)"; // "yes".
+func sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
+}
+
+sayHi("Dear", "Reader");

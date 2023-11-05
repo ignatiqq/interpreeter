@@ -291,7 +291,12 @@ class Scanner implements IScanner {
     }
 
     private addToken(type: string, literal: TokenLiteralType = null) {
-        const lexeme = type === TOKEN_TYPES.EOF ? '' : this.sourceCode.slice(this.start, this.coursor);
+        const lexeme = type === TOKEN_TYPES.EOF 
+        ? '' : type === TOKEN_TYPES.STRING 
+        // @TODO пофиксить костыль нормальным способом
+        ? this.sourceCode.slice(this.start + 1, this.coursor - 1) 
+        : this.sourceCode.slice(this.start, this.coursor);
+
         const token = new Token({ type, lexeme, literal, line: this.line });
         this.tokens.push(token);
     }
