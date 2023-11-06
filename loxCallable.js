@@ -54,7 +54,19 @@ var LoxFunction = /** @class */ (function () {
             // чтобы значения параметров === значения аргументов
             env.define(this.declaration.args[i].lexeme, args[i]);
         }
-        interpreter.executeBlock(this.declaration.body, env);
+        try {
+            // trycatch здесь служит для того, чтобы получить возвращаемое значение
+            // из функции
+            // так как интерпритация return'а представляет из себя псевдо-ошибку
+            // выбрасывающуюся из интерпритатора вместе со значением, которое мы соответственно
+            // возвращаем
+            interpreter.executeBlock(this.declaration.body, env);
+            // @ts-ignore
+        }
+        catch (val) {
+            return val.value;
+        }
+        // если в фунции нет return'а
         return null;
     };
     LoxFunction.prototype.arity = function () {

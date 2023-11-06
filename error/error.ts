@@ -28,3 +28,20 @@ export class RuntimeError extends Error {
     this.message = message;
   }
 }
+
+// класс ехтендящий рантайм ошибку потомучто рантайм === интерпритатор
+// а исключения используется для раскручивания стеков вызова
+export class Return extends RuntimeError {
+  // значения return эксепшна, которое будет использоваться
+  // для асайна
+  // например
+  //             throw error here because of "return" inside and assign value
+  // var value = getValue();
+  value: any;
+
+  constructor(value: any) {
+    // @ts-ignore 
+    super(null, null);
+    this.value = value;
+  }
+}

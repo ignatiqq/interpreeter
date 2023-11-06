@@ -9,6 +9,7 @@ export type StmtVisitor<T> = {
     visitIfStmt(stmt: IfStmt): T;
     visitWhileStmt(stmt: WhileStmt): T;
     visitFunctionStmt(stmt: FunctionStmt): T;
+    visitReturnStmt(stmt: ReturnStmt): T;
 }
 
 export abstract class Stmt {
@@ -116,5 +117,21 @@ export class WhileStmt extends Stmt {
 
     accept<T>(visitor: StmtVisitor<T>): T {
         return visitor.visitWhileStmt(this);
+    }
+}
+
+export class ReturnStmt extends Stmt {
+    expr: Expr | null;
+    // used only for error logging (line)
+    keyword: Token;
+
+    constructor(keyword: Token, expr: Expr | null) {
+        super();
+        this.expr = expr;
+        this.keyword = keyword;
+    }
+
+    accept<T>(visitor: StmtVisitor<T>): T {
+        return visitor.visitReturnStmt(this);
     }
 }

@@ -241,6 +241,15 @@ var Interpreeter = /** @class */ (function () {
         }
         return callee.call(this, evaluatedArgs);
     };
+    // мы используем исключение для раскручивания стека
+    // чтобы выйти из всех циклов и функций
+    Interpreeter.prototype.visitReturnStmt = function (stmt) {
+        var value = null;
+        if (stmt.expr !== null)
+            value = this.evaluate(stmt.expr);
+        // раскручиваем стек со значением которое вернем
+        throw new error_1.Return(value);
+    };
     return Interpreeter;
 }());
 exports.Interpreeter = Interpreeter;

@@ -1,6 +1,7 @@
 import { Interpreeter } from "./AST/interpreeter";
 import { Enviroment } from "./Enviroment";
 import { FunctionStmt } from "./statements/statements";
+import { Return } from "./error/error";
 
 export interface ILoxCallable {
     call(interpreter: Interpreeter, args: any[]): any;
@@ -65,7 +66,20 @@ export class LoxFunction implements ILoxCallable {
             env.define(this.declaration.args[i].lexeme, args[i]);
         }
 
-        interpreter.executeBlock(this.declaration.body, env);
+        try {
+            // trycatch здесь служит для того, чтобы получить возвращаемое значение
+            // из функции
+            // так как интерпритация return'а представляет из себя псевдо-ошибку
+            // выбрасывающуюся из интерпритатора вместе со значением, которое мы соответственно
+            // возвращаем
+            interpreter.executeBlock(this.declaration.body, env);
+            // @ts-ignore
+        } catch(val: Return) {
+            return val.value;
+        }
+
+        // если в фунции нет return'а
+
         return null;
     }
 

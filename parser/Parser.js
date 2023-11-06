@@ -57,7 +57,6 @@ var Parser = /** @class */ (function () {
     Parser.prototype.block = function () {
         var statements = [];
         while (!this.check(tokensType_1.TOKEN_TYPES.RIGHT_BRACE) && !this.isAtEnd()) {
-            console.log('block', this.tokens[this.coursor]);
             var stmt = this.declaration();
             statements.push(stmt);
         }
@@ -89,7 +88,18 @@ var Parser = /** @class */ (function () {
             return this.forStatement();
         if (this.match(tokensType_1.TOKEN_TYPES.FUNCTION))
             return this.funcDeclaration('function');
+        if (this.match(tokensType_1.TOKEN_TYPES.RETURN))
+            return this.returnStatement();
         return this.expressionStatement();
+    };
+    Parser.prototype.returnStatement = function () {
+        var returnToken = this.previous();
+        var value = null;
+        if (!this.check(tokensType_1.TOKEN_TYPES.SEMICOLON)) {
+            value = this.expression();
+        }
+        this.consume(tokensType_1.TOKEN_TYPES.SEMICOLON, 'Expected ";" after return statement');
+        return new statements_1.ReturnStmt(returnToken, value);
     };
     Parser.prototype.funcDeclaration = function (kind) {
         return this.function(kind);

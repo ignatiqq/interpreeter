@@ -15,7 +15,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RuntimeError = exports.ParseError = exports.SyntaxError = void 0;
+exports.Return = exports.RuntimeError = exports.ParseError = exports.SyntaxError = void 0;
 var SyntaxError = /** @class */ (function (_super) {
     __extends(SyntaxError, _super);
     function SyntaxError(message, line, where) {
@@ -48,3 +48,17 @@ var RuntimeError = /** @class */ (function (_super) {
     return RuntimeError;
 }(Error));
 exports.RuntimeError = RuntimeError;
+// класс ехтендящий рантайм ошибку потомучто рантайм === интерпритатор
+// а исключения используется для раскручивания стеков вызова
+var Return = /** @class */ (function (_super) {
+    __extends(Return, _super);
+    function Return(value) {
+        var _this = 
+        // @ts-ignore 
+        _super.call(this, null, null) || this;
+        _this.value = value;
+        return _this;
+    }
+    return Return;
+}(RuntimeError));
+exports.Return = Return;

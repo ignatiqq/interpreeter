@@ -1,7 +1,7 @@
 import { ParseError } from "../error/error";
 import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
-import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, Stmt, VarStmt, WhileStmt } from "../statements/statements";
+import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, VarStmt, WhileStmt } from "../statements/statements";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
 import Token from "../tokens/Token/Token";
 
@@ -98,7 +98,20 @@ export class Parser {
         if(this.match(TOKEN_TYPES.WHILE)) return this.whileStatement();
         if(this.match(TOKEN_TYPES.FOR)) return this.forStatement();
         if(this.match(TOKEN_TYPES.FUNCTION)) return this.funcDeclaration('function');
+        if(this.match(TOKEN_TYPES.RETURN)) return this.returnStatement();
         return this.expressionStatement();
+    }
+
+    returnStatement() {
+        const returnToken = this.previous();
+
+        let value: Expr | null = null;
+        if(!this.check(TOKEN_TYPES.SEMICOLON)) {
+            value = this.expression();
+        }
+
+        this.consume(TOKEN_TYPES.SEMICOLON, 'Expected ";" after return statement');
+        return new ReturnStmt(returnToken, value)
     }
 
     funcDeclaration(kind: string) {

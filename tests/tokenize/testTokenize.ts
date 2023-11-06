@@ -3,9 +3,6 @@ import Interpreter from "../../Interpreter";
 import fs from 'fs';
 // @ts-ignore
 import path from "path";
-import { Parser } from "../../parser/Parser";
-import { ASTPrinter } from "../../AST/printer/ASTprinter";
-import { Enviroment } from "../../Enviroment";
 
 const sourceCode = fs.readFileSync(path.resolve(__dirname, './code.something'), 'utf-8');
 

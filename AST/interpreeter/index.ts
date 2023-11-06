@@ -1,10 +1,10 @@
 import { Enviroment, VariableValueType } from "../../Enviroment";
-import { RuntimeError } from "../../error/error";
+import { Return, RuntimeError } from "../../error/error";
 import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr } from "../../expressions/Expressions";
 import Interpreter from "../../Interpreter";
 import { LoxCallable, LoxFunction } from "../../loxCallable";
 import { Clock } from "../../nativeFunctions";
-import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "../../statements/statements";
+import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "../../statements/statements";
 import { TOKEN_TYPES } from "../../tokens/constants/tokensType";
 import Token from "../../tokens/Token/Token";
 
@@ -263,6 +263,7 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         // actually identifier
         const callee = this.evaluate(expr.callee);
 
+
         const evaluatedArgs: VariableValueType[] = [];
 
         for(const arg of expr.args) {
@@ -278,5 +279,16 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         }
 
         return callee.call(this, evaluatedArgs);
+    }
+
+    // мы используем исключение для раскручивания стека
+    // чтобы выйти из всех циклов и функций
+    visitReturnStmt(stmt: ReturnStmt): void {
+        let value: VariableValueType = null;
+        
+        if(stmt.expr !== null) value = this.evaluate(stmt.expr);
+
+        // раскручиваем стек со значением которое вернем
+        throw new Return(value);
     }
 }
