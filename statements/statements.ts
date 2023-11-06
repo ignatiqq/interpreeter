@@ -60,13 +60,13 @@ export class VarStmt extends Stmt {
 
 export class FunctionStmt extends Stmt {
     identifier: Token;
-    args: Token[];
+    params: Token[];
     body: Stmt[];
 
-    constructor(identifier: Token, args: Token[], body: Stmt[]) {
+    constructor(identifier: Token, params: Token[], body: Stmt[]) {
         super();
         this.identifier = identifier;
-        this.args = args;
+        this.params = params;
         this.body = body;
     }
 

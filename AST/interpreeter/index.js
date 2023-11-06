@@ -220,7 +220,7 @@ var Interpreeter = /** @class */ (function () {
     };
     Interpreeter.prototype.visitFunctionStmt = function (stmt) {
         // this.enviroment.define(stmt.identifier.lexeme, stmt.)
-        var fn = new loxCallable_1.LoxFunction(stmt);
+        var fn = new loxCallable_1.LoxFunction(stmt, this.enviroment);
         // define function indentifier in enviroment
         this.enviroment.define(stmt.identifier.lexeme, fn);
         return null;

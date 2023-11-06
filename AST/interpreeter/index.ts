@@ -253,7 +253,7 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
 
     visitFunctionStmt(stmt: FunctionStmt): null {
         // this.enviroment.define(stmt.identifier.lexeme, stmt.)
-        const fn = new LoxFunction(stmt);
+        const fn = new LoxFunction(stmt, this.enviroment);
         // define function indentifier in enviroment
         this.enviroment.define(stmt.identifier.lexeme, fn);
         return null;
@@ -262,7 +262,6 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     visitCallExpr(expr: CallExpr) {
         // actually identifier
         const callee = this.evaluate(expr.callee);
-
 
         const evaluatedArgs: VariableValueType[] = [];
 

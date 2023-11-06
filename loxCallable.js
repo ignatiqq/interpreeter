@@ -12,8 +12,13 @@ var LoxCallable = /** @class */ (function () {
 }());
 exports.LoxCallable = LoxCallable;
 var LoxFunction = /** @class */ (function () {
-    function LoxFunction(declaration) {
+    // "closure" - ссылка на родительский енвайромент, 
+    // а значит на весь енвайромент до, так как в енвайроменте
+    // можно обращаться к областям переменных которые находятся 
+    // на уровень блока вложенности выше
+    function LoxFunction(declaration, closure) {
         this.declaration = declaration;
+        this.closure = closure;
     }
     /**
         * среда должна создаваться динамически.
@@ -39,20 +44,22 @@ var LoxFunction = /** @class */ (function () {
          * Вот почему мы создаем новое окружение при каждом вызове , а не при объявлении функции
     */
     LoxFunction.prototype.call = function (interpreter, args) {
-        // CHANGED BY MYSELF
-        var env = new Enviroment_1.Enviroment(interpreter.enviroment);
-        for (var i = 0; i < this.declaration.args.length; i++) {
+        // для каждого нового вызова функции мы будем смотреть в его окружение
+        // для функции на самом высоком уровне это будет - global enviroment
+        // для всех остальных по цепочке вложенности
+        var env = new Enviroment_1.Enviroment(this.closure);
+        for (var i = 0; i < this.declaration.params.length; i++) {
             // заключаем имя параметров функции в отдельный enviroment
             // лексическую область видимости
             // тоесть например func(a,b)
             // в енвайромент
             // {
-            //  a: args[i],
-            //  b: args[i],   
+            //  a: params[i],
+            //  b: params[i],   
             // }
             // для последующего executeBlock
             // чтобы значения параметров === значения аргументов
-            env.define(this.declaration.args[i].lexeme, args[i]);
+            env.define(this.declaration.params[i].lexeme, args[i]);
         }
         try {
             // trycatch здесь служит для того, чтобы получить возвращаемое значение
@@ -70,7 +77,7 @@ var LoxFunction = /** @class */ (function () {
         return null;
     };
     LoxFunction.prototype.arity = function () {
-        return this.declaration.args.length;
+        return this.declaration.params.length;
     };
     LoxFunction.prototype.toString = function () {
         return '<fn ' + this.declaration.identifier.lexeme + '>';

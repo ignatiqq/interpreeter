@@ -8,7 +8,7 @@ export const RESERVED_TOKEN_KEYWORDS = {
     'for': TOKEN_TYPES.FOR,
     'false': TOKEN_TYPES.FALSE,
     'true': TOKEN_TYPES.TRUE,
-    'func': TOKEN_TYPES.FUNCTION,
+    'fun': TOKEN_TYPES.FUNCTION,
     'null': TOKEN_TYPES.NULL,
     'or': TOKEN_TYPES.OR,
     'pring': TOKEN_TYPES.PRINT,

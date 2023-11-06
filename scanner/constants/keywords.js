@@ -10,7 +10,7 @@ exports.RESERVED_TOKEN_KEYWORDS = {
     'for': tokensType_1.TOKEN_TYPES.FOR,
     'false': tokensType_1.TOKEN_TYPES.FALSE,
     'true': tokensType_1.TOKEN_TYPES.TRUE,
-    'func': tokensType_1.TOKEN_TYPES.FUNCTION,
+    'fun': tokensType_1.TOKEN_TYPES.FUNCTION,
     'null': tokensType_1.TOKEN_TYPES.NULL,
     'or': tokensType_1.TOKEN_TYPES.OR,
     'pring': tokensType_1.TOKEN_TYPES.PRINT,

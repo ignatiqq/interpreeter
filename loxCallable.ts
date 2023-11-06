@@ -20,9 +20,15 @@ export abstract class LoxCallable implements ILoxCallable {
 
 export class LoxFunction implements ILoxCallable {
     declaration: FunctionStmt;
+    closure: Enviroment;
 
-    constructor(declaration: FunctionStmt) {
+    // "closure" - ссылка на родительский енвайромент, 
+    // а значит на весь енвайромент до, так как в енвайроменте
+    // можно обращаться к областям переменных которые находятся 
+    // на уровень блока вложенности выше
+    constructor(declaration: FunctionStmt, closure: Enviroment) {
         this.declaration = declaration;
+        this.closure = closure;
     }
 
     /**
@@ -49,21 +55,23 @@ export class LoxFunction implements ILoxCallable {
          * Вот почему мы создаем новое окружение при каждом вызове , а не при объявлении функции
     */
     call(interpreter: Interpreeter, args: any[]) {
-        // CHANGED BY MYSELF
-        const env = new Enviroment(interpreter.enviroment);
+        // для каждого нового вызова функции мы будем смотреть в его окружение
+        // для функции на самом высоком уровне это будет - global enviroment
+        // для всех остальных по цепочке вложенности
+        const env = new Enviroment(this.closure);
 
-        for(let i = 0; i < this.declaration.args.length; i++) {
+        for(let i = 0; i < this.declaration.params.length; i++) {
             // заключаем имя параметров функции в отдельный enviroment
             // лексическую область видимости
             // тоесть например func(a,b)
             // в енвайромент
             // {
-            //  a: args[i],
-            //  b: args[i],   
+            //  a: params[i],
+            //  b: params[i],   
             // }
             // для последующего executeBlock
             // чтобы значения параметров === значения аргументов
-            env.define(this.declaration.args[i].lexeme, args[i]);
+            env.define(this.declaration.params[i].lexeme, args[i]);
         }
 
         try {
@@ -84,7 +92,7 @@ export class LoxFunction implements ILoxCallable {
     }
 
     arity(): number {
-       return this.declaration.args.length;
+       return this.declaration.params.length;
     }
 
     toString() {
