@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.Enviroment = void 0;
 var error_1 = require("../error/error");
 var Enviroment = /** @class */ (function () {
@@ -20,8 +20,8 @@ var Enviroment = /** @class */ (function () {
             return this.enclosing.assign(token, val);
         throw new error_1.RuntimeError(token, 'Undefined variable ' + token.lexeme);
     };
-    Enviroment.prototype.delete = function (name) {
-        this.map.delete(name);
+    Enviroment.prototype["delete"] = function (name) {
+        this.map["delete"](name);
     };
     Enviroment.prototype.get = function (token) {
         if (this.map.has(token.lexeme)) {

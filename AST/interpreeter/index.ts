@@ -11,7 +11,7 @@ import Token from "../../tokens/Token/Token";
 type LiteralReturnType = string | number | boolean | null;
 
 /**
- * Interptreete -класс интерпритатора реализовывающий все методы посетителя 
+ * Interptreete - класс интерпритатора реализовывающий все методы посетителя 
  * (Рекурсивный обход и выполнение AST дерева)
  * имеющихся Expression и Statemen'тов
  * наш интерпретатор выполняет пост-заказный обход — каждый узел оценивает своих дочерних узлов,
@@ -23,12 +23,27 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     // globals enviroment used for provide language base functions
     globals: Enviroment;
 
+    /**
+     * resolving variables
+     * 
+     * храним здесь только initialized (определенные) 
+     * перменные к которым мы можем получить доступ
+     */
+    locals = new Map<Expr, number>();
+
     constructor(enviroment: Enviroment) {
         this.globals = enviroment;
         this.enviroment = this.globals;
 
         this.globals.define('clock', new Clock());
     }
+
+    // ресолв всех переменных которые мы заранее (одним проходом) собрали и прикрепили
+    // к разным областям видимости
+    resolve(expr: Expr, depth: number) {
+        this.locals.set(expr, depth);
+    }
+
 
     interprete(stmts: Stmt[]) {
         try {
@@ -146,8 +161,16 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     visitAssignmentExpr(expr: AssignmentExpr) {
         const val = expr.expr !== null ? this.evaluate(expr.expr) : null;
 
+        let distance = this.locals.get(expr);
+
+        if(!distance) {
+            this.globals.assign(expr.token, val)
+        } else {
+            this.enviroment.assignAt(distance, expr.token.lexeme, val);
+        }
+
         // @ts-ignore
-        this.enviroment.assign(expr.token, val);
+        // this.enviroment.assign(expr.token, val);
 
         return val;
     }
@@ -184,7 +207,19 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     // а значит имя = значение (имя преобразуется в значение, а значение = Expression)
     visitVariableExpr(expr: VariableExpr) {
         // берем переменную из enviroment по имени
-        return this.enviroment.get(expr.token);
+        // return this.enviroment.get(expr.token);
+        return this.lookupForVariable(expr.token, expr);
+    }
+
+    lookupForVariable(token: Token, expr: Expr) {
+        const distance = this.locals.get(expr);
+
+        if(!distance) { 
+            this.globals.get(token);
+        } else {
+            this.enviroment.getAt(distance, token.lexeme);
+        }
+        
     }
 
     // stmt visitors
@@ -203,6 +238,9 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     executeBlock(stmts: Stmt[], enviroment: Enviroment) {
         const prev = this.enviroment;
 
+        // finally 
+        // здесь только для того чтобы гарантировать рампутывание енвайромента
+        // в блоке может и не быть ошибки
         try {
             // рекурсивно проваливаемся в новый енвайромент
             this.enviroment = enviroment;
@@ -260,6 +298,9 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     }
 
     visitCallExpr(expr: CallExpr) {
+        console.log('visitCallExpr callee', expr.callee)
+        // @ts-ignore
+        console.log('visitCallExpr prev', expr.callee)
         // actually identifier
         const callee = this.evaluate(expr.callee);
 

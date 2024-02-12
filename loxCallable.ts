@@ -26,6 +26,19 @@ export class LoxFunction implements ILoxCallable {
     // а значит на весь енвайромент до, так как в енвайроменте
     // можно обращаться к областям переменных которые находятся 
     // на уровень блока вложенности выше
+    //
+    // ТОЕСТЬ мы не присваиваем объявлении функции global енвайроменту
+    // а передаем предыдущий, например
+    // fun 1() {
+    //   var hello = 'world';
+    //     
+    //   fun2() {
+    //      print hello;
+    //      (this.enviroment.get('hello')) <- следующая ссылка будет вести на евайромент fun 1 функции и потом на глобал
+    //                                         соответственно при вызове fun 2 из любого места мы забиндили ему енвайромент 
+    //   }
+    //   return fun2;
+    // }
     constructor(declaration: FunctionStmt, closure: Enviroment) {
         this.declaration = declaration;
         this.closure = closure;

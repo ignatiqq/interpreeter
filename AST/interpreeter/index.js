@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.Interpreeter = void 0;
 var Enviroment_1 = require("../../Enviroment");
 var error_1 = require("../../error/error");
@@ -8,7 +8,7 @@ var loxCallable_1 = require("../../loxCallable");
 var nativeFunctions_1 = require("../../nativeFunctions");
 var tokensType_1 = require("../../tokens/constants/tokensType");
 /**
- * Interptreete -класс интерпритатора реализовывающий все методы посетителя
+ * Interptreete - класс интерпритатора реализовывающий все методы посетителя
  * (Рекурсивный обход и выполнение AST дерева)
  * имеющихся Expression и Statemen'тов
  * наш интерпретатор выполняет пост-заказный обход — каждый узел оценивает своих дочерних узлов,
@@ -29,7 +29,7 @@ var Interpreeter = /** @class */ (function () {
             }
         }
         catch (error) {
-            Interpreter_1.default.runtimeError(error.token, error.message);
+            Interpreter_1["default"].runtimeError(error.token, error.message);
         }
     };
     Interpreeter.prototype.execute = function (stmt) {
@@ -41,7 +41,7 @@ var Interpreeter = /** @class */ (function () {
             return expr.accept(this);
         }
         catch (error) {
-            Interpreter_1.default.runtimeError(error.token, error.message);
+            Interpreter_1["default"].runtimeError(error.token, error.message);
         }
     };
     Interpreeter.prototype.checkNumberOperand = function (token, operand) {
@@ -175,6 +175,9 @@ var Interpreeter = /** @class */ (function () {
     ;
     Interpreeter.prototype.executeBlock = function (stmts, enviroment) {
         var prev = this.enviroment;
+        // finally 
+        // здесь только для того чтобы гарантировать рампутывание енвайромента
+        // в блоке может и не быть ошибки
         try {
             // рекурсивно проваливаемся в новый енвайромент
             this.enviroment = enviroment;
@@ -226,6 +229,9 @@ var Interpreeter = /** @class */ (function () {
         return null;
     };
     Interpreeter.prototype.visitCallExpr = function (expr) {
+        console.log('visitCallExpr callee', expr.callee);
+        // @ts-ignore
+        console.log('visitCallExpr prev', expr.callee);
         // actually identifier
         var callee = this.evaluate(expr.callee);
         var evaluatedArgs = [];

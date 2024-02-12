@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.LoxFunction = exports.LoxCallable = void 0;
 var Enviroment_1 = require("./Enviroment");
 var LoxCallable = /** @class */ (function () {
@@ -16,6 +16,19 @@ var LoxFunction = /** @class */ (function () {
     // а значит на весь енвайромент до, так как в енвайроменте
     // можно обращаться к областям переменных которые находятся 
     // на уровень блока вложенности выше
+    //
+    // ТОЕСТЬ мы не присваиваем объявлении функции global енвайроменту
+    // а передаем предыдущий, например
+    // fun 1() {
+    //   var hello = 'world';
+    //     
+    //   fun2() {
+    //      print hello;
+    //      (this.enviroment.get('hello')) <- следующая ссылка будет вести на евайромент fun 1 функции и потом на глобал
+    //                                         соответственно при вызове fun 2 из любого места мы забиндили ему енвайромент 
+    //   }
+    //   return fun2;
+    // }
     function LoxFunction(declaration, closure) {
         this.declaration = declaration;
         this.closure = closure;

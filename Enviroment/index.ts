@@ -21,7 +21,7 @@ export class Enviroment implements IEnviroment {
     
     constructor(enclosing: Enviroment | null = null) {
         this.map = new Map<string, VariableValueType>();
-        this.enclosing = enclosing ;
+        this.enclosing = enclosing;
     }
 
     define(name: string, val: VariableValueType) {
@@ -58,4 +58,38 @@ export class Enviroment implements IEnviroment {
     get isGlobalEnviroment() {
         return this.enclosing === null;
     }
+
+    // getAt method который берет расстояние до локальной переменной определнной по шагам
+    // из Resolver класса
+    getAt(distance: number, name: string) {
+        return this.ancestor(distance).map.get(name);
+    }
+
+    /**
+     * мы будем уходить вверх ровно на distance кол-во шагов
+     * которые получили из Resolver класса
+     * Так же мы точно знаем что переменная существует, так как она попала в мапу и до нее есть расстояние
+     */
+    ancestor(distance: number) {
+        let env: Enviroment = this;
+
+        for(let i = 0; i < distance; i++) {
+            // It will be Enviroment in any cases
+            // because we checking locals now which already locals not globals
+            // because of resolver
+            // @ts-expect-error
+            env = env.enclosing;
+        }
+
+        return env;
+    }
+
+    /**
+     * присваивание переменной значения
+     * знаем на каком уровне оно находится
+     */
+    assignAt<T extends VariableValueType>(distance: number, name: string, val: T) {
+        this.ancestor(distance).map.set(name, val);
+    }
+
 }

@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var interpreeter_1 = require("./AST/interpreeter");
 var Enviroment_1 = require("./Enviroment");
 var Parser_1 = require("./parser/Parser");
@@ -36,7 +36,7 @@ var Language = /** @class */ (function () {
         return this.run(source);
     };
     Language.prototype.run = function (source) {
-        var scanner = new Scanner_1.default(source);
+        var scanner = new Scanner_1["default"](source);
         var tokens = scanner.scanTokens();
         if (Language.hadError || Language.hadRuntimeError) {
             return;
@@ -58,4 +58,4 @@ var Language = /** @class */ (function () {
     Language.interpreter = new interpreeter_1.Interpreeter(new Enviroment_1.Enviroment());
     return Language;
 }());
-exports.default = Language;
+exports["default"] = Language;

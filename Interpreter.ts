@@ -1,6 +1,8 @@
 import { Interpreeter } from './AST/interpreeter';
 import { ASTPrinter } from './AST/printer/ASTprinter';
+import { Resolver } from './AST/resolver/resolver';
 import { Enviroment, IEnviroment } from './Enviroment';
+import { Expr } from './expressions/Expressions';
 import { Parser } from './parser/Parser';
 import Scanner from './scanner/Scanner/Scanner';
 import { TOKEN_TYPES } from './tokens/constants/tokensType';
@@ -17,6 +19,7 @@ class Language {
 	static hadError = false;
 	static hadRuntimeError = false;
 	static interpreter = new Interpreeter(new Enviroment());
+	static resolver = new Resolver(Language.interpreter);
 
 	static error(token: Token, message: string) {
 		if(token.type === TOKEN_TYPES.EOF) {

@@ -18,11 +18,13 @@ type UnaryExprReturnType = UnaryExpr | PrimaryExprReturnType;
  *  ---------------------------------------------------------
  *  Grammar notation	              Code representation
  * 
- *  Terminal (определение правила)	  Code to match and consume a token
- *  Nonterminal (ссылка на правило)	  Call to that rule’s function
- *  |                                 if or switch statement
- *  * or +	                          while or for loop
+ *  Terminal (определение правила)	  Code to match and consume a token - единственный символ (if) (1) (a)
+ *  Nonterminal (ссылка на правило)	  Call to that rule’s function      - рекурсивное правило для составления терминалов
+ *  |                                 if or switch statement            - Вместо повторения имени правила каждый раз, когда мы хотим добавить для него еще одно производство, мы разрешим серию производств, разделенных вертикальной чертой
+ *  * or +	                          while or for loop                 - рекурсия
  *  ?	                              if statement
+ * 
+ * все это правила (условные) контекстно свободной грамматики
  */
 export class Parser {
     private coursor: number;
@@ -388,6 +390,12 @@ export class Parser {
         return this.call();
     }
 
+    /**
+     * fun doSomething() {}
+     * 
+     * call -> doSomething()();
+     * where expr = doSomething and then check for "LEFT_PAREN ("
+     */
     call(): Expr {
         // actually identifier if (reall call expr)
         let expr = this.primary();
@@ -408,7 +416,7 @@ export class Parser {
     finishCall(callee: Expr) {
         const args: Expr[] = [];
 
-        // пока не дошли до конца вызова функции
+        // edge case without args
         if(!this.check(TOKEN_TYPES.RIGHT_PAREN)) {
 
             do {

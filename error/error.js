@@ -14,7 +14,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.Return = exports.RuntimeError = exports.ParseError = exports.SyntaxError = void 0;
 var SyntaxError = /** @class */ (function (_super) {
     __extends(SyntaxError, _super);

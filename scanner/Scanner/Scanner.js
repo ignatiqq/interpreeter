@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var tokensType_1 = require("../../tokens/constants/tokensType");
 var Token_1 = require("../../tokens/Token/Token");
 var Interpreter_1 = require("../../Interpreter");
@@ -34,7 +34,7 @@ var Scanner = /** @class */ (function () {
             return true;
         }
         else {
-            Interpreter_1.default.signalError(this.line, 'Unexpected token: ' + symbol);
+            Interpreter_1["default"].signalError(this.line, 'Unexpected token: ' + symbol);
         }
     };
     Scanner.prototype.peek = function (options) {
@@ -215,8 +215,8 @@ var Scanner = /** @class */ (function () {
                 }
                 else {
                     this.eat(rangeSymbol);
-                    // we must to stop our shile loop if it's error
-                    Interpreter_1.default.signalError(this.line, 'Unexpected token: ' + rangeSymbol);
+                    // we must to stop our while loop if it's an error
+                    Interpreter_1["default"].signalError(this.line, 'Unexpected token: ' + rangeSymbol);
                     break;
                 }
                 break;
@@ -282,7 +282,7 @@ var Scanner = /** @class */ (function () {
         this.eat(val);
         var content = this.readWhileMatching(function () { return !_this.peekMatch(val) && !_this.isAtEnd(); });
         if (this.isAtEnd()) {
-            Interpreter_1.default.signalError(this.line, "Unterminated string.");
+            Interpreter_1["default"].signalError(this.line, "Unterminated string.");
         }
         this.eat(val);
         this.addToken(tokensType_1.TOKEN_TYPES.STRING, content);
@@ -306,9 +306,9 @@ var Scanner = /** @class */ (function () {
             // @TODO пофиксить костыль нормальным способом
             ? this.sourceCode.slice(this.start + 1, this.coursor - 1)
             : this.sourceCode.slice(this.start, this.coursor);
-        var token = new Token_1.default({ type: type, lexeme: lexeme, literal: literal, line: this.line });
+        var token = new Token_1["default"]({ type: type, lexeme: lexeme, literal: literal, line: this.line });
         this.tokens.push(token);
     };
     return Scanner;
 }());
-exports.default = Scanner;
+exports["default"] = Scanner;

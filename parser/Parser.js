@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.Parser = void 0;
 var error_1 = require("../error/error");
 var Expressions_1 = require("../expressions/Expressions");
@@ -16,11 +16,13 @@ var tokensType_1 = require("../tokens/constants/tokensType");
  *  ---------------------------------------------------------
  *  Grammar notation	              Code representation
  *
- *  Terminal (определение правила)	  Code to match and consume a token
- *  Nonterminal (ссылка на правило)	  Call to that rule’s function
- *  |                                 if or switch statement
- *  * or +	                          while or for loop
+ *  Terminal (определение правила)	  Code to match and consume a token - единственный символ (if) (1) (a)
+ *  Nonterminal (ссылка на правило)	  Call to that rule’s function      - рекурсивное правило для составления терминалов
+ *  |                                 if or switch statement            - Вместо повторения имени правила каждый раз, когда мы хотим добавить для него еще одно производство, мы разрешим серию производств, разделенных вертикальной чертой
+ *  * or +	                          while or for loop                 - рекурсия
  *  ?	                              if statement
+ *
+ * все это правила (условные) контекстно свободной грамматики
  */
 var Parser = /** @class */ (function () {
     function Parser(tokens) {
@@ -102,9 +104,9 @@ var Parser = /** @class */ (function () {
         return new statements_1.ReturnStmt(returnToken, value);
     };
     Parser.prototype.funcDeclaration = function (kind) {
-        return this.function(kind);
+        return this["function"](kind);
     };
-    Parser.prototype.function = function (kind) {
+    Parser.prototype["function"] = function (kind) {
         var name = this.consume(tokensType_1.TOKEN_TYPES.IDENTIFIER, 'Expected ' + kind + ' name');
         this.consume(tokensType_1.TOKEN_TYPES.LEFT_PAREN, 'Expected "(" after ' + kind + ' name');
         var params = [];
@@ -321,6 +323,12 @@ var Parser = /** @class */ (function () {
         }
         return this.call();
     };
+    /**
+     * fun doSomething() {}
+     *
+     * call -> doSomething()();
+     * where expr = doSomething and then check for "LEFT_PAREN ("
+     */
     Parser.prototype.call = function () {
         // actually identifier if (reall call expr)
         var expr = this.primary();
@@ -337,7 +345,7 @@ var Parser = /** @class */ (function () {
     };
     Parser.prototype.finishCall = function (callee) {
         var args = [];
-        // пока не дошли до конца вызова функции
+        // edge case without args
         if (!this.check(tokensType_1.TOKEN_TYPES.RIGHT_PAREN)) {
             do {
                 if (args.length > 254) {
@@ -441,7 +449,7 @@ var Parser = /** @class */ (function () {
         throw this.error(this.peek(), message);
     };
     Parser.prototype.error = function (token, message) {
-        Interpreter_1.default.error(token, message);
+        Interpreter_1["default"].error(token, message);
         return new error_1.ParseError();
     };
     Parser.prototype.synchronize = function () {

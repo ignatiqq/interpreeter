@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.RESERVED_TOKEN_KEYWORDS = void 0;
 var tokensType_1 = require("../../tokens/constants/tokensType");
 exports.RESERVED_TOKEN_KEYWORDS = {

@@ -198,7 +198,7 @@ class Scanner implements IScanner {
                         this.parseIdentifier();
                     } else {
                         this.eat(rangeSymbol);
-                        // we must to stop our shile loop if it's error
+                        // we must to stop our while loop if it's an error
                         Interpreter.signalError(this.line, 'Unexpected token: ' + rangeSymbol); break;
                     }
                 break;

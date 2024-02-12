@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var Token = /** @class */ (function () {
     function Token(options) {
         var type = options.type, lexeme = options.lexeme, literal = options.literal, line = options.line;
@@ -13,4 +13,4 @@ var Token = /** @class */ (function () {
     };
     return Token;
 }());
-exports.default = Token;
+exports["default"] = Token;
