@@ -71,7 +71,16 @@ class Language {
 		const syntaxTree = parser.parse();
 
 		if(Language.hadError || !syntaxTree) {
-			return syntaxTree;
+			return;
+		}
+
+		// собираем и валидируем локальные области видимости
+		// для интерпритатора
+		Language.resolver.resolveManyStmt(syntaxTree);
+
+		// если произошла ошибка во время семантического анализа
+		if(Language.hadError) {
+			return;
 		}
 
 		return Language.interpreter.interprete(syntaxTree);

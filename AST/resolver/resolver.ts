@@ -1,9 +1,23 @@
+import Language from "../../Interpreter";
 import Interpreter from "../../Interpreter";
 import { AssignmentExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, VariableExpr } from "../../expressions/Expressions";
 import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "../../statements/statements";
 import Token from "../../tokens/Token/Token";
 import { Interpreeter } from "../interpreeter";
 
+enum FunctionType {
+    NONE,
+    FUNCTION
+}
+
+/**
+ * Проверяем семантическую правильность кода пользователя
+ * 
+ * Мы могли бы пойти дальше и сообщать о предупреждениях для кода, который не обязательно ошибочен,
+ *  но, вероятно, бесполезен. Например, многие IDE предупреждают, если после return оператора имеется
+ * недостижимый код или локальная переменная, значение которой никогда не читается. 
+ * Все это было бы довольно легко добавить в наш статический пропуск на посещение или в виде отдельных пропусков.
+ */
 export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
     interpreeter: Interpreeter;
     /**
@@ -13,6 +27,16 @@ export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
      * false = означает что переменная была объявлена, но еще не инициализирована (значением)
     */
     scopes = new Array<Map<string, boolean>>();
+
+    /**
+     * Мы так же хотим предотвратить return stmt
+     * return 'anything';
+     * не в функциях
+     * поэтому будем отслеживать находимся ли мы сейчас в функции или нет
+     * и в returnStmt визиторе смотреть если мы не в функции выдавать ошибку
+     * @param interpreeter 
+     */
+    currentFunction = FunctionType.NONE;
 
     constructor(interpreeter: Interpreeter) {
         this.interpreeter = interpreeter;
@@ -71,7 +95,7 @@ export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
     visitFunctionStmt(stmt: FunctionStmt): void {
         this.declare(stmt.identifier);
         this.define(stmt.identifier);
-        this.resolveFunction(stmt);
+        this.resolveFunction(stmt, FunctionType.FUNCTION);
     }
 
 
@@ -109,6 +133,9 @@ export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
     }
 
     visitReturnStmt(stmt: ReturnStmt) {
+        if(this.currentFunction === FunctionType.NONE) {
+            Language.error(stmt.keyword, 'Cant return from top-level code.');
+        }
         if(stmt.expr !== null) this.resolveExpr(stmt.expr);
         return null;
     }
@@ -154,8 +181,21 @@ export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
      */
     declare(token: Token) {
         if(this.scopes.length === 0) return;
+        const currScope = this.scopes[this.scopes.length - 1];
 
-        this.scopes[this.scopes.length - 1].set(token.lexeme, false);
+        /**
+         * we cant define two variables with the same name in one block stmt
+         * 
+         * fun bad() {
+         *    var a = "first";
+         *    var a = "second";
+         * }
+         */
+        if(currScope.has(token.lexeme)) {
+            Language.error(token, 'Already a variable with this name in this scope.');
+        }
+
+        currScope.set(token.lexeme, false);
     }
 
     /**
@@ -167,7 +207,11 @@ export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
         this.scopes[this.scopes.length - 1].set(token.lexeme, true);
     }
 
-    resolveFunction(stmt: FunctionStmt) {
+    resolveFunction(stmt: FunctionStmt, type: FunctionType) {
+        // сохраняем состояние "в функции"
+        const tempType = this.currentFunction;
+        // не пишем FunctionType.FUNCTION чтобы метод работал и с классами
+        this.currentFunction = type;
         this.beginScope();
         for(const param of stmt.params) { 
             this.declare(param);
@@ -175,6 +219,8 @@ export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
         }
         this.resolveManyStmt(stmt.body);
         this.endScope();
+        // раскручиваем currentFunction значение
+        this.currentFunction = tempType;
     }
 
     /**
