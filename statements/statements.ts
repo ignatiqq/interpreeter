@@ -10,6 +10,7 @@ export type StmtVisitor<T> = {
     visitWhileStmt(stmt: WhileStmt): T;
     visitFunctionStmt(stmt: FunctionStmt): T;
     visitReturnStmt(stmt: ReturnStmt): T;
+    visitClassStmt(stmt: ClassStmt): T;
 }
 
 export abstract class Stmt {
@@ -133,5 +134,20 @@ export class ReturnStmt extends Stmt {
 
     accept<T>(visitor: StmtVisitor<T>): T {
         return visitor.visitReturnStmt(this);
+    }
+}
+
+export class ClassStmt extends Stmt {
+    token: Token;
+    methods: FunctionStmt[];
+
+    constructor(token: Token, methods: FunctionStmt[]) {
+        super();
+        this.token = token;
+        this.methods = methods;
+    }
+
+    accept<T>(visitor: StmtVisitor<T>): T {
+        return visitor.visitClassStmt(this);
     }
 }

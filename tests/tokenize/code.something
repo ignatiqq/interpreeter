@@ -1,10 +1,9 @@
-var a = "global";
-{
-  fun showA() {
-    print a;
-  }
+class Box {}
 
-  showA();б
-  var a = "block";
-  showA();
+fun notMethod(argument) {
+  print "called function with " + argument;
 }
+
+var box = Box();
+box.function = notMethod;
+box.function("argument");

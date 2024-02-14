@@ -1,7 +1,8 @@
 "use strict";
 exports.__esModule = true;
-exports.LoxFunction = exports.LoxCallable = void 0;
+exports.LoxInstance = exports.LoxClass = exports.LoxFunction = exports.LoxCallable = void 0;
 var Enviroment_1 = require("./Enviroment");
+var error_1 = require("./error/error");
 var LoxCallable = /** @class */ (function () {
     function LoxCallable() {
     }
@@ -74,6 +75,7 @@ var LoxFunction = /** @class */ (function () {
             // чтобы значения параметров === значения аргументов
             env.define(this.declaration.params[i].lexeme, args[i]);
         }
+        console.log('call function?', this.declaration.body);
         try {
             // trycatch здесь служит для того, чтобы получить возвращаемое значение
             // из функции
@@ -98,3 +100,52 @@ var LoxFunction = /** @class */ (function () {
     return LoxFunction;
 }());
 exports.LoxFunction = LoxFunction;
+var LoxClass = /** @class */ (function () {
+    function LoxClass(name) {
+        this.name = name;
+    }
+    LoxClass.prototype.call = function (interpreter, args) {
+        var instance = new LoxInstance(this);
+        return instance;
+    };
+    LoxClass.prototype.toString = function () {
+        return this.name;
+    };
+    LoxClass.prototype.arity = function () {
+        return 0;
+    };
+    return LoxClass;
+}());
+exports.LoxClass = LoxClass;
+/**
+ * Инстанс класса для рантайма
+ */
+var LoxInstance = /** @class */ (function () {
+    function LoxInstance(klass) {
+        /**
+         * любой инстанс класса будет иметь локальное состояние
+         */
+        this.fields = new Map();
+        this.klass = klass;
+    }
+    LoxInstance.prototype.call = function (interpreter, args) {
+        console.log({ args: args });
+    };
+    LoxInstance.prototype.arity = function () {
+        return 0;
+    };
+    LoxInstance.prototype.get = function (token) {
+        if (!this.fields.has(token.lexeme)) {
+            throw new error_1.RuntimeError(token, "Undefined property " + token.lexeme);
+        }
+        return this.fields.get(token.lexeme);
+    };
+    LoxInstance.prototype.set = function (token, value) {
+        this.fields.set(token.lexeme, value);
+    };
+    LoxInstance.prototype.toString = function () {
+        return this.klass.name + ' instance';
+    };
+    return LoxInstance;
+}());
+exports.LoxInstance = LoxInstance;

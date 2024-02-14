@@ -34,7 +34,7 @@ export class Enviroment implements IEnviroment {
         }
 
         // @ts-ignore @TODO
-        if(!this.isGlobalEnviroment) return this.enclosing.assign(token, val);
+        if(!this.isGlobalEnviroment()) return this.enclosing.assign(token, val);
 
         throw new RuntimeError(token, 'Undefined variable ' + token.lexeme);
     }
@@ -50,12 +50,12 @@ export class Enviroment implements IEnviroment {
 
         // @ts-ignore @TODO
         // рекурсивный поиск перменных в областях видимости (евайроментах) выше
-        if(!this.isGlobalEnviroment) return this.enclosing.get(token);
+        if(!this.isGlobalEnviroment()) return this.enclosing.get(token);
 
         throw new RuntimeError(token, 'Undefined variable ' + token.lexeme);
     }
 
-    get isGlobalEnviroment() {
+    isGlobalEnviroment() {
         return this.enclosing === null;
     }
 

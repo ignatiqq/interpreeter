@@ -1,7 +1,8 @@
 import { Interpreeter } from "./AST/interpreeter";
 import { Enviroment } from "./Enviroment";
 import { FunctionStmt } from "./statements/statements";
-import { Return } from "./error/error";
+import { Return, RuntimeError } from "./error/error";
+import Token from "./tokens/Token/Token";
 
 export interface ILoxCallable {
     call(interpreter: Interpreeter, args: any[]): any;
@@ -87,6 +88,8 @@ export class LoxFunction implements ILoxCallable {
             env.define(this.declaration.params[i].lexeme, args[i]);
         }
 
+
+        console.log('call function?', this.declaration.body)
         try {
             // trycatch здесь служит для того, чтобы получить возвращаемое значение
             // из функции
@@ -110,5 +113,66 @@ export class LoxFunction implements ILoxCallable {
 
     toString() {
         return '<fn ' + this.declaration.identifier.lexeme + '>'
+    }
+}
+
+export class LoxClass implements ILoxCallable {
+    name: string;
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    call(interpreter: Interpreeter, args: any[]) {
+        const instance = new LoxInstance(this);
+        
+        return instance;
+    }
+
+    toString() {
+        return this.name;
+    }
+
+    arity(): number {
+        return 0;
+    }
+}
+
+/**
+ * Инстанс класса для рантайма
+ */
+export class LoxInstance implements ILoxCallable  {
+    klass: LoxClass;
+    /**
+     * любой инстанс класса будет иметь локальное состояние
+     */
+    fields = new Map<string, any>();
+
+    constructor(klass: LoxClass) {
+        this.klass = klass;
+    }
+
+    call(interpreter: Interpreeter, args: any[]) {
+        console.log({args});
+    }
+
+    arity(): number {
+        return 0;
+    }
+
+    get(token: Token) {
+        if(!this.fields.has(token.lexeme)) {
+            throw new RuntimeError(token, "Undefined property " + token.lexeme);
+        }
+
+        return this.fields.get(token.lexeme);
+    }
+
+    set<T>(token: Token, value: T) {
+        this.fields.set(token.lexeme, value);
+    }
+
+    toString() {
+        return this.klass.name + ' instance';
     }
 }

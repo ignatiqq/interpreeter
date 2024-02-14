@@ -15,7 +15,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 exports.__esModule = true;
-exports.ReturnStmt = exports.WhileStmt = exports.IfStmt = exports.BlockStmt = exports.FunctionStmt = exports.VarStmt = exports.PrintStmt = exports.ExpressionStmt = exports.Stmt = void 0;
+exports.ClassStmt = exports.ReturnStmt = exports.WhileStmt = exports.IfStmt = exports.BlockStmt = exports.FunctionStmt = exports.VarStmt = exports.PrintStmt = exports.ExpressionStmt = exports.Stmt = void 0;
 var Stmt = /** @class */ (function () {
     function Stmt() {
     }
@@ -135,3 +135,17 @@ var ReturnStmt = /** @class */ (function (_super) {
     return ReturnStmt;
 }(Stmt));
 exports.ReturnStmt = ReturnStmt;
+var ClassStmt = /** @class */ (function (_super) {
+    __extends(ClassStmt, _super);
+    function ClassStmt(token, methods) {
+        var _this = _super.call(this) || this;
+        _this.token = token;
+        _this.methods = methods;
+        return _this;
+    }
+    ClassStmt.prototype.accept = function (visitor) {
+        return visitor.visitClassStmt(this);
+    };
+    return ClassStmt;
+}(Stmt));
+exports.ClassStmt = ClassStmt;

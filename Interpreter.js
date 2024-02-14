@@ -1,6 +1,7 @@
 "use strict";
 exports.__esModule = true;
 var interpreeter_1 = require("./AST/interpreeter");
+var resolver_1 = require("./AST/resolver/resolver");
 var Enviroment_1 = require("./Enviroment");
 var Parser_1 = require("./parser/Parser");
 var Scanner_1 = require("./scanner/Scanner/Scanner");
@@ -48,7 +49,14 @@ var Language = /** @class */ (function () {
         // statements tree
         var syntaxTree = parser.parse();
         if (Language.hadError || !syntaxTree) {
-            return syntaxTree;
+            return;
+        }
+        // собираем и валидируем локальные области видимости
+        // для интерпритатора
+        Language.resolver.resolveManyStmt(syntaxTree);
+        // если произошла ошибка во время семантического анализа
+        if (Language.hadError) {
+            return;
         }
         return Language.interpreter.interprete(syntaxTree);
         // return Interpreter.interpreterMath.evaluate(syntaxTree);
@@ -56,6 +64,7 @@ var Language = /** @class */ (function () {
     Language.hadError = false;
     Language.hadRuntimeError = false;
     Language.interpreter = new interpreeter_1.Interpreeter(new Enviroment_1.Enviroment());
+    Language.resolver = new resolver_1.Resolver(Language.interpreter);
     return Language;
 }());
 exports["default"] = Language;

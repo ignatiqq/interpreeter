@@ -17,10 +17,22 @@ var tokensType_1 = require("../../tokens/constants/tokensType");
  */
 var Interpreeter = /** @class */ (function () {
     function Interpreeter(enviroment) {
+        /**
+         * resolving variables
+         *
+         * храним здесь только initialized (определенные)
+         * перменные к которым мы можем получить доступ
+         */
+        this.locals = new Map();
         this.globals = enviroment;
         this.enviroment = this.globals;
         this.globals.define('clock', new nativeFunctions_1.Clock());
     }
+    // ресолв всех переменных которые мы заранее (одним проходом) собрали и прикрепили
+    // к разным областям видимости
+    Interpreeter.prototype.resolve = function (expr, depth) {
+        this.locals.set(expr, depth);
+    };
     Interpreeter.prototype.interprete = function (stmts) {
         try {
             for (var _i = 0, stmts_1 = stmts; _i < stmts_1.length; _i++) {
@@ -124,8 +136,16 @@ var Interpreeter = /** @class */ (function () {
     ;
     Interpreeter.prototype.visitAssignmentExpr = function (expr) {
         var val = expr.expr !== null ? this.evaluate(expr.expr) : null;
+        var distance = this.locals.get(expr);
+        if (!Number.isInteger(distance)) {
+            this.globals.assign(expr.token, val);
+        }
+        else {
+            // @ts-ignore
+            this.enviroment.assignAt(distance, expr.token.lexeme, val);
+        }
         // @ts-ignore
-        this.enviroment.assign(expr.token, val);
+        // this.enviroment.assign(expr.token, val);
         return val;
     };
     Interpreeter.prototype.isEqual = function (val, val2) {
@@ -158,7 +178,18 @@ var Interpreeter = /** @class */ (function () {
     // а значит имя = значение (имя преобразуется в значение, а значение = Expression)
     Interpreeter.prototype.visitVariableExpr = function (expr) {
         // берем переменную из enviroment по имени
-        return this.enviroment.get(expr.token);
+        // return this.enviroment.get(expr.token);
+        return this.lookupForVariable(expr.token, expr);
+    };
+    Interpreeter.prototype.lookupForVariable = function (token, expr) {
+        var distance = this.locals.get(expr);
+        if (!Number.isInteger(distance)) {
+            return this.globals.get(token);
+        }
+        else {
+            // @ts-ignore
+            return this.enviroment.getAt(distance, token.lexeme);
+        }
     };
     // stmt visitors
     Interpreeter.prototype.visitExpressionStmt = function (stmt) {
@@ -170,7 +201,7 @@ var Interpreeter = /** @class */ (function () {
         // только expression мы не можем передать statement (консрукцию языка)
         // потомучто оно не ресолвиться в значение (value)
         var expr = this.evaluate(stmt.expression);
-        console.log("".concat(expr));
+        console.log(expr);
     };
     ;
     Interpreeter.prototype.executeBlock = function (stmts, enviroment) {
@@ -221,6 +252,12 @@ var Interpreeter = /** @class */ (function () {
         }
         return null;
     };
+    Interpreeter.prototype.visitClassStmt = function (stmt) {
+        this.enviroment.define(stmt.token.lexeme, null);
+        var klass = new loxCallable_1.LoxClass(stmt.token.lexeme);
+        this.enviroment.assign(stmt.token, klass);
+        return null;
+    };
     Interpreeter.prototype.visitFunctionStmt = function (stmt) {
         // this.enviroment.define(stmt.identifier.lexeme, stmt.)
         var fn = new loxCallable_1.LoxFunction(stmt, this.enviroment);
@@ -229,9 +266,6 @@ var Interpreeter = /** @class */ (function () {
         return null;
     };
     Interpreeter.prototype.visitCallExpr = function (expr) {
-        console.log('visitCallExpr callee', expr.callee);
-        // @ts-ignore
-        console.log('visitCallExpr prev', expr.callee);
         // actually identifier
         var callee = this.evaluate(expr.callee);
         var evaluatedArgs = [];
@@ -239,13 +273,37 @@ var Interpreeter = /** @class */ (function () {
             var arg = _a[_i];
             evaluatedArgs.push(this.evaluate(arg));
         }
-        if (!(callee instanceof loxCallable_1.LoxFunction)) {
+        if (!(callee instanceof loxCallable_1.LoxFunction) && !(callee instanceof loxCallable_1.LoxClass)) {
             throw new error_1.RuntimeError(expr.paren, 'Can only call functions and classes.');
         }
         if (evaluatedArgs.length !== callee.arity()) {
             throw new error_1.RuntimeError(expr.paren, 'Expected ' + callee.arity() + ' arguments but got ' + arguments.length);
         }
         return callee.call(this, evaluatedArgs);
+    };
+    /**
+     * Так как только в джсе можно литерально создать объект
+     *
+     * а в других языках объекты генерят только классы мы будем првоерять на инстанс и
+     * выхывать гет метод у LoxInstance рантайм класса
+     * @param expr
+     */
+    Interpreeter.prototype.visitGetExpr = function (expr) {
+        var object = this.evaluate(expr.object);
+        if (object instanceof loxCallable_1.LoxInstance) {
+            // реализовать у рантайм класса инстанса метод get
+            return object.get(expr.token);
+        }
+        throw new error_1.RuntimeError(expr.token, 'Only instances have properties.');
+    };
+    Interpreeter.prototype.visitSetExpr = function (expr) {
+        var object = this.evaluate(expr.object);
+        if (object instanceof loxCallable_1.LoxInstance) {
+            var value = this.evaluate(expr.value);
+            object.set(expr.token, value);
+            return value;
+        }
+        throw new error_1.RuntimeError(expr.token, 'Only instances can set properties.');
     };
     // мы используем исключение для раскручивания стека
     // чтобы выйти из всех циклов и функций

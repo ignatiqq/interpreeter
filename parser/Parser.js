@@ -35,7 +35,7 @@ var Parser = /** @class */ (function () {
             while (!this.isAtEnd()) {
                 statements.push(this.declaration());
             }
-            console.log({ statements: statements });
+            console.log('parser.parse', { statements: statements });
             return statements;
         }
         catch (error) {
@@ -90,6 +90,8 @@ var Parser = /** @class */ (function () {
             return this.forStatement();
         if (this.match(tokensType_1.TOKEN_TYPES.FUNCTION))
             return this.funcDeclaration('function');
+        if (this.match(tokensType_1.TOKEN_TYPES.CLASS))
+            return this.classDeclaration();
         if (this.match(tokensType_1.TOKEN_TYPES.RETURN))
             return this.returnStatement();
         return this.expressionStatement();
@@ -102,6 +104,16 @@ var Parser = /** @class */ (function () {
         }
         this.consume(tokensType_1.TOKEN_TYPES.SEMICOLON, 'Expected ";" after return statement');
         return new statements_1.ReturnStmt(returnToken, value);
+    };
+    Parser.prototype.classDeclaration = function () {
+        var name = this.consume(tokensType_1.TOKEN_TYPES.IDENTIFIER, 'Expected class name.');
+        this.consume(tokensType_1.TOKEN_TYPES.LEFT_BRACE, 'Expected "{" before class body.');
+        var methods = [];
+        while (!this.check(tokensType_1.TOKEN_TYPES.RIGHT_BRACE) && !this.isAtEnd()) {
+            methods.push(this["function"]('method'));
+        }
+        this.consume(tokensType_1.TOKEN_TYPES.RIGHT_BRACE, 'Expected } after class body.');
+        return new statements_1.ClassStmt(name, methods);
     };
     Parser.prototype.funcDeclaration = function (kind) {
         return this["function"](kind);
@@ -234,12 +246,22 @@ var Parser = /** @class */ (function () {
             // вычисляем значение справа (Expression(s))
             var value = this.assignment();
             // проверяем является ли expression Identifier (VarExpr)
+            // var name = 'ignat';
+            // name = 'timur';   <-----
             if (expr instanceof Expressions_1.VariableExpr) {
                 // если предыдущий токен это 
                 // VarExpr, тоесть identifier,
                 // то мы возвращаем Assignment Expression
                 var token = expr.token;
                 return new Expressions_1.AssignmentExpr(token, value);
+            }
+            else 
+            // проверяем является ли expression Identifier (VarExpr)
+            // const instance = SomeClass();
+            // instance.field1.field2 = 'timur';   <-----
+            if (expr instanceof Expressions_1.GetExpr) {
+                var get = expr;
+                return new Expressions_1.SetExpr(get.object, get.token, value);
             }
             this.error(equals, "Invalid assignment target.");
         }
@@ -337,6 +359,12 @@ var Parser = /** @class */ (function () {
                 // если это вызов функции
                 // передаем callee (Identifier) в вспомогательную функцию
                 expr = this.finishCall(expr);
+                continue;
+            }
+            if (this.match(tokensType_1.TOKEN_TYPES.DOT)) {
+                // new GetExpr(expr as object, name of field);
+                var name_1 = this.consume(tokensType_1.TOKEN_TYPES.IDENTIFIER, "Expect property name after '.'");
+                expr = new Expressions_1.GetExpr(expr, name_1);
                 continue;
             }
             break;

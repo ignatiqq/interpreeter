@@ -1,10 +1,11 @@
+import { constants } from "buffer";
 import { Enviroment, VariableValueType } from "../../Enviroment";
 import { Return, RuntimeError } from "../../error/error";
-import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr } from "../../expressions/Expressions";
+import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr, GetExpr, SetExpr } from "../../expressions/Expressions";
 import Interpreter from "../../Interpreter";
-import { LoxCallable, LoxFunction } from "../../loxCallable";
+import { LoxCallable, LoxClass, LoxFunction, LoxInstance } from "../../loxCallable";
 import { Clock } from "../../nativeFunctions";
-import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "../../statements/statements";
+import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "../../statements/statements";
 import { TOKEN_TYPES } from "../../tokens/constants/tokensType";
 import Token from "../../tokens/Token/Token";
 
@@ -163,9 +164,10 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
 
         let distance = this.locals.get(expr);
 
-        if(!distance) {
+        if(!Number.isInteger(distance)) {
             this.globals.assign(expr.token, val)
         } else {
+            // @ts-ignore
             this.enviroment.assignAt(distance, expr.token.lexeme, val);
         }
 
@@ -213,13 +215,13 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
 
     lookupForVariable(token: Token, expr: Expr) {
         const distance = this.locals.get(expr);
-
-        if(!distance) { 
-            this.globals.get(token);
-        } else {
-            this.enviroment.getAt(distance, token.lexeme);
-        }
         
+        if(!Number.isInteger(distance)) { 
+            return this.globals.get(token);
+        } else {
+            // @ts-ignore
+            return this.enviroment.getAt(distance, token.lexeme);
+        }
     }
 
     // stmt visitors
@@ -232,7 +234,7 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         // только expression мы не можем передать statement (консрукцию языка)
         // потомучто оно не ресолвиться в значение (value)
         const expr = this.evaluate(stmt.expression);
-        console.log(`${expr}`);
+        console.log(expr);
     };
 
     executeBlock(stmts: Stmt[], enviroment: Enviroment) {
@@ -289,6 +291,13 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         return null;
     }
 
+    visitClassStmt(stmt: ClassStmt): null {
+        this.enviroment.define(stmt.token.lexeme, null);
+        const klass = new LoxClass(stmt.token.lexeme);
+        this.enviroment.assign(stmt.token, klass);
+        return null;
+    }
+
     visitFunctionStmt(stmt: FunctionStmt): null {
         // this.enviroment.define(stmt.identifier.lexeme, stmt.)
         const fn = new LoxFunction(stmt, this.enviroment);
@@ -298,9 +307,6 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
     }
 
     visitCallExpr(expr: CallExpr) {
-        console.log('visitCallExpr callee', expr.callee)
-        // @ts-ignore
-        console.log('visitCallExpr prev', expr.callee)
         // actually identifier
         const callee = this.evaluate(expr.callee);
 
@@ -310,7 +316,7 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
             evaluatedArgs.push(this.evaluate(arg));
         }
 
-        if(!(callee instanceof LoxFunction)) {
+        if(!(callee instanceof LoxFunction) && !(callee instanceof LoxClass)) {
             throw new RuntimeError(expr.paren, 'Can only call functions and classes.');
         }
 
@@ -319,6 +325,37 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         }
 
         return callee.call(this, evaluatedArgs);
+    }
+
+    /**
+     * Так как только в джсе можно литерально создать объект
+     * 
+     * а в других языках объекты генерят только классы мы будем првоерять на инстанс и 
+     * выхывать гет метод у LoxInstance рантайм класса
+     * @param expr 
+     */
+    visitGetExpr(expr: GetExpr) {
+        const object = this.evaluate(expr.object);
+
+        if(object instanceof LoxInstance) {
+            // реализовать у рантайм класса инстанса метод get
+            return object.get(expr.token);
+        }
+
+        throw new RuntimeError(expr.token, 'Only instances have properties.');
+    }
+
+    visitSetExpr(expr: SetExpr) {
+        const object = this.evaluate(expr.object);
+
+        if(object instanceof LoxInstance) {
+            const value = this.evaluate(expr.value);
+
+            object.set(expr.token, value);
+            return value;
+        }
+
+        throw new RuntimeError(expr.token, 'Only instances can set properties.');
     }
 
     // мы используем исключение для раскручивания стека

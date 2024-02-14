@@ -1,7 +1,7 @@
 import { ParseError } from "../error/error";
-import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr } from "../expressions/Expressions";
+import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr, GetExpr, SetExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
-import { BlockStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, VarStmt, WhileStmt } from "../statements/statements";
+import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, VarStmt, WhileStmt } from "../statements/statements";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
 import Token from "../tokens/Token/Token";
 
@@ -43,7 +43,7 @@ export class Parser {
                 statements.push(this.declaration());
             }
 
-            console.log({statements})
+            console.log('parser.parse', {statements})
 
             return statements;
         } catch (error) {
@@ -100,6 +100,7 @@ export class Parser {
         if(this.match(TOKEN_TYPES.WHILE)) return this.whileStatement();
         if(this.match(TOKEN_TYPES.FOR)) return this.forStatement();
         if(this.match(TOKEN_TYPES.FUNCTION)) return this.funcDeclaration('function');
+        if(this.match(TOKEN_TYPES.CLASS)) return this.classDeclaration();
         if(this.match(TOKEN_TYPES.RETURN)) return this.returnStatement();
         return this.expressionStatement();
     }
@@ -114,6 +115,22 @@ export class Parser {
 
         this.consume(TOKEN_TYPES.SEMICOLON, 'Expected ";" after return statement');
         return new ReturnStmt(returnToken, value)
+    }
+
+    classDeclaration() {
+        const name = this.consume(TOKEN_TYPES.IDENTIFIER, 'Expected class name.');
+
+        this.consume(TOKEN_TYPES.LEFT_BRACE, 'Expected "{" before class body.');
+
+        const methods: FunctionStmt[] = [];
+
+        while(!this.check(TOKEN_TYPES.RIGHT_BRACE) && !this.isAtEnd()) {
+            methods.push(this.function('method'));
+        }
+
+        this.consume(TOKEN_TYPES.RIGHT_BRACE, 'Expected } after class body.');
+
+        return new ClassStmt(name, methods);
     }
 
     funcDeclaration(kind: string) {
@@ -277,12 +294,21 @@ export class Parser {
             const value = this.assignment();
 
             // проверяем является ли expression Identifier (VarExpr)
+            // var name = 'ignat';
+            // name = 'timur';   <-----
             if(expr instanceof VariableExpr) {
                 // если предыдущий токен это 
                 // VarExpr, тоесть identifier,
                 // то мы возвращаем Assignment Expression
                 const token = expr.token;
                 return new AssignmentExpr(token, value);
+            } else 
+            // проверяем является ли expression Identifier (VarExpr)
+            // const instance = SomeClass();
+            // instance.field1.field2 = 'timur';   <-----
+            if(expr instanceof GetExpr) {
+                const get = expr;
+                return new SetExpr(get.object, get.token, value);
             }
 
             this.error(equals, "Invalid assignment target.");
@@ -405,6 +431,13 @@ export class Parser {
                 // если это вызов функции
                 // передаем callee (Identifier) в вспомогательную функцию
                 expr = this.finishCall(expr);
+                continue;
+            }
+
+            if(this.match(TOKEN_TYPES.DOT)) {
+                // new GetExpr(expr as object, name of field);
+                const name = this.consume(TOKEN_TYPES.IDENTIFIER, "Expect property name after '.'");
+                    expr = new GetExpr(expr, name)
                 continue;
             }
             break;

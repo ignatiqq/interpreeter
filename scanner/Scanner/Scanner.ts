@@ -161,7 +161,6 @@ class Scanner implements IScanner {
                 break;
             // comment and division lexical analyze:
             case '/':
-                console.log('peekmatch: ', this.peek(), this.peekMatch('/'))
                 if (this.peekMatch('/') && (this.peekMatch('/', {offset: 1}) || this.peekMatch('*', {offset: 1}))) {
                     this.skipComments();
                 } else {

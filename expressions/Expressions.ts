@@ -15,6 +15,8 @@ export interface ExprVisitor<T> {
     visitAssignmentExpr(expr: AssignmentExpr): T;
     visitLogicalExpr(expr: LogicalExpr): T;
     visitCallExpr(expr: CallExpr): T;
+    visitGetExpr(expr: GetExpr): T;
+    visitSetExpr(expr: SetExpr): T;
     // visitIdentifierExpr: (expr: IdentifierExpr) => T;
     
     // just binary 
@@ -163,5 +165,37 @@ export class CallExpr extends Expr {
 
     accept<T>(visitor: ExprVisitor<T>): T {
         return visitor.visitCallExpr(this);    
+    }
+}
+
+export class GetExpr extends Expr {
+    object: Expr;
+    token: Token;
+
+    constructor(object: Expr, token: Token) {
+        super();
+        this.object = object;
+        this.token = token;
+    }
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitGetExpr(this);    
+    }
+}
+
+export class SetExpr extends Expr {
+    object: Expr;
+    token: Token;
+    value: Expr;
+
+    constructor(object: Expr, token: Token, value: Expr) {
+        super();
+        this.object = object;
+        this.token = token;
+        this.value = value;
+    }
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitSetExpr(this);    
     }
 }
