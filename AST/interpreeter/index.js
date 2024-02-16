@@ -254,7 +254,14 @@ var Interpreeter = /** @class */ (function () {
     };
     Interpreeter.prototype.visitClassStmt = function (stmt) {
         this.enviroment.define(stmt.token.lexeme, null);
-        var klass = new loxCallable_1.LoxClass(stmt.token.lexeme);
+        // resolve this for class methods
+        var methods = new Map();
+        for (var _i = 0, _a = stmt.methods; _i < _a.length; _i++) {
+            var method = _a[_i];
+            var fn = new loxCallable_1.LoxFunction(method, this.enviroment);
+            methods.set(method.identifier.lexeme, fn);
+        }
+        var klass = new loxCallable_1.LoxClass(stmt.token.lexeme, methods);
         this.enviroment.assign(stmt.token, klass);
         return null;
     };
@@ -280,6 +287,9 @@ var Interpreeter = /** @class */ (function () {
             throw new error_1.RuntimeError(expr.paren, 'Expected ' + callee.arity() + ' arguments but got ' + arguments.length);
         }
         return callee.call(this, evaluatedArgs);
+    };
+    Interpreeter.prototype.visitThisExpr = function (expr) {
+        return this.lookupForVariable(expr.token, expr);
     };
     /**
      * Так как только в джсе можно литерально создать объект

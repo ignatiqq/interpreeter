@@ -1,13 +1,19 @@
 import Language from "../../Interpreter";
 import Interpreter from "../../Interpreter";
-import { AssignmentExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, UnaryExpr, VariableExpr } from "../../expressions/Expressions";
+import { AssignmentExpr, BinaryExpr, CallExpr, Expr, ExprVisitor, GetExpr, GroupingExpr, LiteralExpr, LogicalExpr, SetExpr, ThisExpr, UnaryExpr, VariableExpr } from "../../expressions/Expressions";
 import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, StmtVisitor, VarStmt, WhileStmt } from "../../statements/statements";
 import Token from "../../tokens/Token/Token";
 import { Interpreeter } from "../interpreeter";
 
 enum FunctionType {
     NONE,
-    FUNCTION
+    FUNCTION,
+    METHOD
+}
+
+enum ClassType {
+    NONE,
+    CLASS,
 }
 
 /**
@@ -37,6 +43,13 @@ export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
      * @param interpreeter 
      */
     currentFunction = FunctionType.NONE;
+
+    /**
+     * хендл всех this вне методов (без класса)
+     * @param interpreeter 
+     */
+    currentClass = ClassType.NONE;
+
 
     constructor(interpreeter: Interpreeter) {
         this.interpreeter = interpreeter;
@@ -93,12 +106,24 @@ export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
     }
 
     visitClassStmt(stmt: ClassStmt) {
+        const enclosingClass = this.currentClass;
+        this.currentClass = ClassType.CLASS;
+
         this.declare(stmt.token);
         this.define(stmt.token);
+
+        this.beginScope();
+        this.scopes[this.scopes.length - 1].set('this', true);
+
+        for(const method of stmt.methods) {
+            const declaration = FunctionType.METHOD;
+            this.resolveFunction(method, declaration);
+        }
+        
+        this.endScope();
+        this.currentClass = enclosingClass;
+
         return null;
-        // for(const method of stmt.methods) {
-        //     this.visitFunctionStmt(method);
-        // }
     }
 
     visitFunctionStmt(stmt: FunctionStmt): void {
@@ -191,6 +216,14 @@ export class Resolver implements ExprVisitor<any>, StmtVisitor<void> {
     visitSetExpr(expr: SetExpr) {
         this.resolveExpr(expr.object);
         this.resolveExpr(expr.value);
+        return null;
+    }
+
+    visitThisExpr(expr: ThisExpr) {
+        if(this.currentClass === ClassType.NONE) {
+            Language.error(expr.token, "Can't use 'this' outside of a class")
+        }
+        this.resolveLocal(expr, expr.token);
         return null;
     }
 

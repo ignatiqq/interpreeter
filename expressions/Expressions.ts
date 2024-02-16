@@ -17,6 +17,7 @@ export interface ExprVisitor<T> {
     visitCallExpr(expr: CallExpr): T;
     visitGetExpr(expr: GetExpr): T;
     visitSetExpr(expr: SetExpr): T;
+    visitThisExpr(expr: ThisExpr): T;
     // visitIdentifierExpr: (expr: IdentifierExpr) => T;
     
     // just binary 
@@ -197,5 +198,18 @@ export class SetExpr extends Expr {
 
     accept<T>(visitor: ExprVisitor<T>): T {
         return visitor.visitSetExpr(this);    
+    }
+}
+
+export class ThisExpr extends Expr {
+    token: Token;
+
+    constructor(token: Token) {
+        super();
+        this.token = token;
+    }
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitThisExpr(this);    
     }
 }

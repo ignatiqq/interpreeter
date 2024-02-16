@@ -7,7 +7,13 @@ var FunctionType;
 (function (FunctionType) {
     FunctionType[FunctionType["NONE"] = 0] = "NONE";
     FunctionType[FunctionType["FUNCTION"] = 1] = "FUNCTION";
+    FunctionType[FunctionType["METHOD"] = 2] = "METHOD";
 })(FunctionType || (FunctionType = {}));
+var ClassType;
+(function (ClassType) {
+    ClassType[ClassType["NONE"] = 0] = "NONE";
+    ClassType[ClassType["CLASS"] = 1] = "CLASS";
+})(ClassType || (ClassType = {}));
 /**
  * Проверяем семантическую правильность кода пользователя
  *
@@ -34,6 +40,11 @@ var Resolver = /** @class */ (function () {
          * @param interpreeter
          */
         this.currentFunction = FunctionType.NONE;
+        /**
+         * хендл всех this вне методов (без класса)
+         * @param interpreeter
+         */
+        this.currentClass = ClassType.NONE;
         this.interpreeter = interpreeter;
     }
     Resolver.prototype.visitBlockStmt = function (stmt) {
@@ -82,12 +93,20 @@ var Resolver = /** @class */ (function () {
         return null;
     };
     Resolver.prototype.visitClassStmt = function (stmt) {
+        var enclosingClass = this.currentClass;
+        this.currentClass = ClassType.CLASS;
         this.declare(stmt.token);
         this.define(stmt.token);
+        this.beginScope();
+        this.scopes[this.scopes.length - 1].set('this', true);
+        for (var _i = 0, _a = stmt.methods; _i < _a.length; _i++) {
+            var method = _a[_i];
+            var declaration = FunctionType.METHOD;
+            this.resolveFunction(method, declaration);
+        }
+        this.endScope();
+        this.currentClass = enclosingClass;
         return null;
-        // for(const method of stmt.methods) {
-        //     this.visitFunctionStmt(method);
-        // }
     };
     Resolver.prototype.visitFunctionStmt = function (stmt) {
         this.declare(stmt.identifier);
@@ -169,6 +188,13 @@ var Resolver = /** @class */ (function () {
     Resolver.prototype.visitSetExpr = function (expr) {
         this.resolveExpr(expr.object);
         this.resolveExpr(expr.value);
+        return null;
+    };
+    Resolver.prototype.visitThisExpr = function (expr) {
+        if (this.currentClass === ClassType.NONE) {
+            Interpreter_1["default"].error(expr.token, "Can't use 'this' outside of a class");
+        }
+        this.resolveLocal(expr, expr.token);
         return null;
     };
     // вспомогательные методы для разрешениий областей видимости

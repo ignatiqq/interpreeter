@@ -407,6 +407,8 @@ var Parser = /** @class */ (function () {
             return new Expressions_1.LiteralExpr(Number(this.previous().lexeme));
         if (this.match(tokensType_1.TOKEN_TYPES.STRING))
             return new Expressions_1.LiteralExpr(this.previous().lexeme);
+        if (this.match(tokensType_1.TOKEN_TYPES.THIS))
+            return new Expressions_1.ThisExpr(this.previous());
         if (this.match(tokensType_1.TOKEN_TYPES.LEFT_PAREN)) {
             var expr = this.expression();
             this.consume(tokensType_1.TOKEN_TYPES.RIGHT_PAREN, 'Expected ")" after grouping expression');

@@ -1,7 +1,7 @@
 import { constants } from "buffer";
 import { Enviroment, VariableValueType } from "../../Enviroment";
 import { Return, RuntimeError } from "../../error/error";
-import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr, GetExpr, SetExpr } from "../../expressions/Expressions";
+import { Expr, ExprVisitor, LiteralExpr, UnaryExpr, BinaryExpr, GroupingExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr, GetExpr, SetExpr, ThisExpr } from "../../expressions/Expressions";
 import Interpreter from "../../Interpreter";
 import { LoxCallable, LoxClass, LoxFunction, LoxInstance } from "../../loxCallable";
 import { Clock } from "../../nativeFunctions";
@@ -293,7 +293,16 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
 
     visitClassStmt(stmt: ClassStmt): null {
         this.enviroment.define(stmt.token.lexeme, null);
-        const klass = new LoxClass(stmt.token.lexeme);
+
+        // resolve this for class methods
+        const methods = new Map<string, LoxFunction>();
+
+        for(const method of stmt.methods) {
+            const fn = new LoxFunction(method, this.enviroment);
+            methods.set(method.identifier.lexeme, fn);
+        }
+
+        const klass = new LoxClass(stmt.token.lexeme, methods);
         this.enviroment.assign(stmt.token, klass);
         return null;
     }
@@ -325,6 +334,10 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         }
 
         return callee.call(this, evaluatedArgs);
+    }
+    
+    visitThisExpr(expr: ThisExpr) {
+        return this.lookupForVariable(expr.token, expr);
     }
 
     /**

@@ -1,9 +1,13 @@
-class Box {}
+class Cake {
+  init(arg) {
+    this.flavor = arg;
+  }
 
-fun notMethod(argument) {
-  print "called function with " + argument;
+  taste() {
+    var adjective = "delicious";
+    print "The " + this.flavor + " cake is " + adjective + "!";
+  }
 }
 
-var box = Box();
-box.function = notMethod;
-box.function("argument");
+var cake = Cake('some flavour');
+cake.taste(); // Prints "The German chocolate cake is delicious!".

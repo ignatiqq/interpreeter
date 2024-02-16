@@ -91,6 +91,11 @@ var LoxFunction = /** @class */ (function () {
         // если в фунции нет return'а
         return null;
     };
+    LoxFunction.prototype.bind = function (instance) {
+        var env = new Enviroment_1.Enviroment(this.closure);
+        env.define('this', instance);
+        return new LoxFunction(this.declaration, env);
+    };
     LoxFunction.prototype.arity = function () {
         return this.declaration.params.length;
     };
@@ -100,25 +105,53 @@ var LoxFunction = /** @class */ (function () {
     return LoxFunction;
 }());
 exports.LoxFunction = LoxFunction;
+/**
+ * Class constructor
+ *
+ * because of no "new" syntax
+ * we build new instance with call of ClassName -> LoxClass();
+ *
+ * экземпляр (инстанс) хранит состояние
+ * А класс поведение (методы)
+ */
 var LoxClass = /** @class */ (function () {
-    function LoxClass(name) {
+    function LoxClass(name, methods) {
         this.name = name;
+        this.methods = methods;
     }
     LoxClass.prototype.call = function (interpreter, args) {
         var instance = new LoxInstance(this);
+        // если у класса есть "init" метод (constructore)
+        // то мы вызовем его
+        var initializer = this.findMethod('init');
+        if (!!initializer) {
+            initializer.bind(instance).call(interpreter, args);
+        }
         return instance;
+    };
+    LoxClass.prototype.findMethod = function (name) {
+        if (this.methods.has(name))
+            return this.methods.get(name);
+        return null;
     };
     LoxClass.prototype.toString = function () {
         return this.name;
     };
     LoxClass.prototype.arity = function () {
-        return 0;
+        var initializer = this.findMethod('init');
+        if (initializer == null)
+            return 0;
+        return initializer.arity();
     };
     return LoxClass;
 }());
 exports.LoxClass = LoxClass;
 /**
  * Инстанс класса для рантайма
+ *
+ * экземпляр (инстанс) хранит состояние
+ * А класс поведение (методы)
+ * Несмотря на то, что методы принадлежат классу, доступ к ним по-прежнему осуществляется через экземпляры этого класса.
  */
 var LoxInstance = /** @class */ (function () {
     function LoxInstance(klass) {
@@ -129,16 +162,19 @@ var LoxInstance = /** @class */ (function () {
         this.klass = klass;
     }
     LoxInstance.prototype.call = function (interpreter, args) {
-        console.log({ args: args });
     };
     LoxInstance.prototype.arity = function () {
         return 0;
     };
     LoxInstance.prototype.get = function (token) {
-        if (!this.fields.has(token.lexeme)) {
-            throw new error_1.RuntimeError(token, "Undefined property " + token.lexeme);
+        if (this.fields.has(token.lexeme)) {
+            return this.fields.get(token.lexeme);
         }
-        return this.fields.get(token.lexeme);
+        // check for method
+        var method = this.klass.findMethod(token.lexeme);
+        if (method && method !== null)
+            return method.bind(this);
+        throw new error_1.RuntimeError(token, "Undefined property " + token.lexeme);
     };
     LoxInstance.prototype.set = function (token, value) {
         this.fields.set(token.lexeme, value);

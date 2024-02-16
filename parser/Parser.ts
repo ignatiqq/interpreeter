@@ -1,5 +1,5 @@
 import { ParseError } from "../error/error";
-import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr, GetExpr, SetExpr } from "../expressions/Expressions";
+import {  Expr, BinaryExpr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr, AssignmentExpr, LogicalExpr, CallExpr, GetExpr, SetExpr, ThisExpr } from "../expressions/Expressions";
 import Interpreter from "../Interpreter";
 import { BlockStmt, ClassStmt, ExpressionStmt, FunctionStmt, IfStmt, PrintStmt, ReturnStmt, Stmt, VarStmt, WhileStmt } from "../statements/statements";
 import { TOKEN_TYPE, TOKEN_TYPES } from "../tokens/constants/tokensType";
@@ -482,6 +482,7 @@ export class Parser {
         if(this.match(TOKEN_TYPES.IDENTIFIER)) return new VariableExpr(this.previous());
         if(this.match(TOKEN_TYPES.NUMBER)) return new LiteralExpr(Number(this.previous().lexeme));
         if(this.match(TOKEN_TYPES.STRING)) return new LiteralExpr(this.previous().lexeme);
+        if(this.match(TOKEN_TYPES.THIS)) return new ThisExpr(this.previous());
         if(this.match(TOKEN_TYPES.LEFT_PAREN)) {
             const expr = this.expression();
             this.consume(TOKEN_TYPES.RIGHT_PAREN, 'Expected ")" after grouping expression');

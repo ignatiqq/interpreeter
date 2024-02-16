@@ -107,6 +107,12 @@ export class LoxFunction implements ILoxCallable {
         return null;
     }
 
+    bind(instance: LoxInstance) {
+        const env = new Enviroment(this.closure);
+        env.define('this', instance);
+        return new LoxFunction(this.declaration, env);
+    }
+
     arity(): number {
        return this.declaration.params.length;
     }
@@ -116,17 +122,41 @@ export class LoxFunction implements ILoxCallable {
     }
 }
 
+/**
+ * Class constructor
+ * 
+ * because of no "new" syntax
+ * we build new instance with call of ClassName -> LoxClass();
+ * 
+ * экземпляр (инстанс) хранит состояние
+ * А класс поведение (методы)
+ */
 export class LoxClass implements ILoxCallable {
     name: string;
+    methods: Map<string, LoxFunction>;
 
-    constructor(name: string) {
+    constructor(name: string, methods: Map<string, LoxFunction>) {
         this.name = name;
+        this.methods = methods;
     }
 
     call(interpreter: Interpreeter, args: any[]) {
         const instance = new LoxInstance(this);
+
+        // если у класса есть "init" метод (constructore)
+        // то мы вызовем его
+        const initializer = this.findMethod('init');
+
+        if(!!initializer) {
+            initializer.bind(instance).call(interpreter, args);
+        }
         
         return instance;
+    }
+
+    findMethod(name: string) {
+        if(this.methods.has(name)) return this.methods.get(name);
+        return null;
     }
 
     toString() {
@@ -134,12 +164,18 @@ export class LoxClass implements ILoxCallable {
     }
 
     arity(): number {
-        return 0;
+        const initializer = this.findMethod('init');
+        if (initializer == null) return 0;
+        return initializer.arity();
     }
 }
 
 /**
  * Инстанс класса для рантайма
+ * 
+ * экземпляр (инстанс) хранит состояние
+ * А класс поведение (методы)
+ * Несмотря на то, что методы принадлежат классу, доступ к ним по-прежнему осуществляется через экземпляры этого класса.
  */
 export class LoxInstance implements ILoxCallable  {
     klass: LoxClass;
@@ -153,7 +189,6 @@ export class LoxInstance implements ILoxCallable  {
     }
 
     call(interpreter: Interpreeter, args: any[]) {
-        console.log({args});
     }
 
     arity(): number {
@@ -161,11 +196,15 @@ export class LoxInstance implements ILoxCallable  {
     }
 
     get(token: Token) {
-        if(!this.fields.has(token.lexeme)) {
-            throw new RuntimeError(token, "Undefined property " + token.lexeme);
+        if(this.fields.has(token.lexeme)) {
+            return this.fields.get(token.lexeme);
         }
 
-        return this.fields.get(token.lexeme);
+        // check for method
+        const method = this.klass.findMethod(token.lexeme);
+        if(method && method !== null) return method.bind(this);
+
+        throw new RuntimeError(token, "Undefined property " + token.lexeme);
     }
 
     set<T>(token: Token, value: T) {
