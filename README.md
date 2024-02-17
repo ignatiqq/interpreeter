@@ -9,3 +9,5 @@ The language included in this repository allows for the creation of custom progr
 - **Tokenization**: The process of converting source code into tokens for parsing.
 - **Parsing**: Translating the tokenized code into a structured format for execution.
 - **Execution**: Running the parsed code according to the language rules.
+
+based on - https://craftinginterpreters.com/
