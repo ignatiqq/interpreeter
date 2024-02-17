@@ -36,7 +36,7 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         this.globals = enviroment;
         this.enviroment = this.globals;
 
-        this.globals.define('clock', new Clock());
+        this.globals.define('clock',  new Clock());
     }
 
     // ресолв всех переменных которые мы заранее (одним проходом) собрали и прикрепили
@@ -217,6 +217,7 @@ export class Interpreeter implements ExprVisitor<any>, StmtVisitor<void> {
         const distance = this.locals.get(expr);
         
         if(!Number.isInteger(distance)) { 
+            console.log(this.globals.get(token))
             return this.globals.get(token);
         } else {
             // @ts-ignore
